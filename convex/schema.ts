@@ -14,6 +14,7 @@ const users = defineTable({
   phoneVerificationTime: v.optional(v.number()),
   isAnonymous: v.optional(v.boolean()),
   role: v.optional(v.string()),
+  isDeactivated: v.optional(v.boolean()),
 })
   .index("email", ["email"])
   .index("phone", ["phone"]);
