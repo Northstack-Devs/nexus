@@ -64,9 +64,6 @@ export default function AdminShell({
               <Users className="h-4 w-4" />
               User management
             </Link>
-            <div className="px-3 pt-4 text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
-              More soon
-            </div>
             <Link
               href="/admin/roles"
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-200 hover:translate-x-1"
