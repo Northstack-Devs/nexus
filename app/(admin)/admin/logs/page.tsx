@@ -52,6 +52,11 @@ export default function AdminLogsPage() {
     { initialNumItems: PAGE_SIZE },
   );
 
+  const actionOptions = useMemo(() => {
+    const values = new Set(results.map((log) => log.action));
+    return Array.from(values).sort();
+  }, [results]);
+
   const handleApply = () => {
     setAppliedFilters(draftFilters);
   };
@@ -117,6 +122,7 @@ export default function AdminLogsPage() {
             <Input
               id="filter-action"
               placeholder="user.updated"
+              list="audit-actions"
               value={draftFilters.action}
               onChange={(event) =>
                 setDraftFilters((prev) => ({
@@ -125,6 +131,11 @@ export default function AdminLogsPage() {
                 }))
               }
             />
+            <datalist id="audit-actions">
+              {actionOptions.map((action) => (
+                <option key={action} value={action} />
+              ))}
+            </datalist>
           </div>
           <div className="space-y-2">
             <Label htmlFor="filter-start">Start date</Label>
