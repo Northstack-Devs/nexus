@@ -19,9 +19,16 @@ const users = defineTable({
   .index("email", ["email"])
   .index("phone", ["phone"]);
 
+const roles = defineTable({
+  name: v.string(),
+  description: v.optional(v.string()),
+  permissions: v.array(v.string()),
+}).index("name", ["name"]);
+
 export default defineSchema({
   ...authTables,
   users,
+  roles,
   numbers: defineTable({
     value: v.number(),
   }),

@@ -16,6 +16,7 @@ Upty is a Next.js application backed by Convex and Convex Auth. The admin experi
 - Route: `/admin` (`app/(admin)/admin`)
 - Gating: authenticated users with `users.role === "admin"`.
 - User management actions: create, edit, deactivate/reactivate.
+- Roles & permissions: `/admin/roles` with role presets and permission editing.
 
 ## Data Model
 
@@ -29,11 +30,16 @@ Upty is a Next.js application backed by Convex and Convex Auth. The admin experi
 - Queries
   - `getCurrentUser`
   - `listUsers` (admin-only results)
+  - `listRoles` (admin-only results)
 - Mutations
   - `createUser`
   - `updateUser`
   - `deactivateUser`
   - `reactivateUser`
+  - `createRole`
+  - `updateRole`
+  - `deleteRole`
+  - `seedRolePresets` (internal)
   - `setUserRole` (internal)
 
 ## Roadmap Ideas

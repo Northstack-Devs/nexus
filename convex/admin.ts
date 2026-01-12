@@ -67,6 +67,59 @@ export const listUsers = query({
   },
 });
 
+export const listRoles = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    return await ctx.db.query("roles").order("desc").take(100);
+  },
+});
+
+export const createRole = mutation({
+  args: {
+    name: v.string(),
+    description: v.optional(v.string()),
+    permissions: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    return await ctx.db.insert("roles", {
+      name: args.name,
+      description: args.description,
+      permissions: args.permissions,
+    });
+  },
+});
+
+export const updateRole = mutation({
+  args: {
+    roleId: v.id("roles"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    permissions: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    await ctx.db.patch(args.roleId, {
+      name: args.name,
+      description: args.description,
+      permissions: args.permissions,
+    });
+  },
+});
+
+export const deleteRole = mutation({
+  args: {
+    roleId: v.id("roles"),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    await ctx.db.delete(args.roleId);
+  },
+});
+
 export const createUser = mutation({
   args: {
     name: v.optional(v.string()),
@@ -132,6 +185,52 @@ export const reactivateUser = mutation({
     await ctx.db.patch(args.userId, {
       isDeactivated: false,
     });
+  },
+});
+
+export const seedRolePresets = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const presets = [
+      {
+        name: "admin",
+        description: "Full access to manage users, roles, and settings.",
+        permissions: [
+          "users.read",
+          "users.write",
+          "roles.manage",
+          "audit.read",
+          "settings.manage",
+        ],
+      },
+      {
+        name: "manager",
+        description: "Manage users and review audit logs.",
+        permissions: ["users.read", "users.write", "audit.read"],
+      },
+      {
+        name: "support",
+        description: "Read-only access to users and audit logs.",
+        permissions: ["users.read", "audit.read"],
+      },
+      {
+        name: "analyst",
+        description: "View users and system analytics.",
+        permissions: ["users.read"],
+      },
+    ];
+
+    for (const preset of presets) {
+      const existing = await ctx.db
+        .query("roles")
+        .withIndex("name", (q) => q.eq("name", preset.name))
+        .first();
+      if (existing) {
+        await ctx.db.patch(existing._id, preset);
+      } else {
+        await ctx.db.insert("roles", preset);
+      }
+    }
   },
 });
 

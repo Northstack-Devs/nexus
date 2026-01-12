@@ -66,10 +66,13 @@ export default function AdminShell({
             <div className="px-3 pt-4 text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
               More soon
             </div>
-            <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-900">
+            <Link
+              href="/admin/roles"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-200 hover:translate-x-1"
+            >
               <ShieldCheck className="h-4 w-4" />
               Roles & permissions
-            </div>
+            </Link>
             <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-900">
               <Bell className="h-4 w-4" />
               Audit logs
