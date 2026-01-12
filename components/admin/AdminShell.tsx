@@ -54,10 +54,10 @@ export default function AdminShell({
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-200 hover:translate-x-1"
             >
               <LayoutDashboard className="h-4 w-4" />
-              Dashboard
+              Dashboard overview
             </Link>
             <Link
-              href="/admin"
+              href="/admin/users"
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-200 hover:translate-x-1"
             >
               <Users className="h-4 w-4" />
