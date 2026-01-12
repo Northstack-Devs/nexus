@@ -187,6 +187,180 @@ export const deleteRole = mutation({
   },
 });
 
+export const listSubscriptionPlans = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    search: v.optional(v.string()),
+    isActive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    let query = ctx.db.query("subscriptionPlans").order("desc");
+    if (args.search) {
+      const term = args.search.trim();
+      query = query.filter((q) =>
+        q.or(q.eq(q.field("name"), term), q.eq(q.field("description"), term)),
+      );
+    }
+    if (typeof args.isActive === "boolean") {
+      query = query.filter((q) => q.eq(q.field("isActive"), args.isActive));
+    }
+
+    return await query.paginate(args.paginationOpts);
+  },
+});
+
+export const createSubscriptionPlan = mutation({
+  args: {
+    name: v.string(),
+    description: v.optional(v.string()),
+    priceMonthly: v.optional(v.number()),
+    priceYearly: v.optional(v.number()),
+    features: v.array(v.string()),
+    isActive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const planId = await ctx.db.insert("subscriptionPlans", {
+      name: args.name,
+      description: args.description,
+      priceMonthly: args.priceMonthly,
+      priceYearly: args.priceYearly,
+      features: args.features,
+      isActive: args.isActive ?? true,
+    });
+
+    await logAudit(ctx, "plan.created", planId, {
+      name: args.name,
+    });
+
+    return planId;
+  },
+});
+
+export const updateSubscriptionPlan = mutation({
+  args: {
+    planId: v.id("subscriptionPlans"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    priceMonthly: v.optional(v.number()),
+    priceYearly: v.optional(v.number()),
+    features: v.array(v.string()),
+    isActive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    await ctx.db.patch(args.planId, {
+      name: args.name,
+      description: args.description,
+      priceMonthly: args.priceMonthly,
+      priceYearly: args.priceYearly,
+      features: args.features,
+      isActive: args.isActive,
+    });
+
+    await logAudit(ctx, "plan.updated", args.planId, {
+      name: args.name,
+    });
+  },
+});
+
+export const deleteSubscriptionPlan = mutation({
+  args: {
+    planId: v.id("subscriptionPlans"),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    await ctx.db.delete(args.planId);
+
+    await logAudit(ctx, "plan.deleted", args.planId);
+  },
+});
+
+export const listSubscriptions = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    userId: v.optional(v.id("users")),
+    planId: v.optional(v.id("subscriptionPlans")),
+    status: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    let query = ctx.db.query("subscriptions").order("desc");
+    if (args.userId) {
+      query = query.filter((q) => q.eq(q.field("userId"), args.userId));
+    }
+    if (args.planId) {
+      query = query.filter((q) => q.eq(q.field("planId"), args.planId));
+    }
+    if (args.status) {
+      query = query.filter((q) => q.eq(q.field("status"), args.status));
+    }
+    return await query.paginate(args.paginationOpts);
+  },
+});
+
+export const createSubscription = mutation({
+  args: {
+    userId: v.id("users"),
+    planId: v.optional(v.id("subscriptionPlans")),
+    status: v.string(),
+    currentPeriodEnd: v.optional(v.number()),
+    metadata: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const subscriptionId = await ctx.db.insert("subscriptions", {
+      userId: args.userId,
+      planId: args.planId,
+      status: args.status,
+      currentPeriodEnd: args.currentPeriodEnd,
+      metadata: args.metadata,
+    });
+
+    await logAudit(ctx, "subscription.created", subscriptionId, {
+      userId: args.userId,
+      planId: args.planId ?? null,
+      status: args.status,
+    });
+
+    return subscriptionId;
+  },
+});
+
+export const updateSubscription = mutation({
+  args: {
+    subscriptionId: v.id("subscriptions"),
+    planId: v.optional(v.id("subscriptionPlans")),
+    status: v.optional(v.string()),
+    currentPeriodEnd: v.optional(v.number()),
+    canceledAt: v.optional(v.number()),
+    metadata: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const updates = {
+      planId: args.planId,
+      status: args.status,
+      currentPeriodEnd: args.currentPeriodEnd,
+      canceledAt: args.canceledAt,
+      metadata: args.metadata,
+    };
+
+    await ctx.db.patch(args.subscriptionId, updates);
+
+    await logAudit(ctx, "subscription.updated", args.subscriptionId, {
+      planId: args.planId ?? null,
+      status: args.status ?? null,
+    });
+  },
+});
+
 export const createUser = mutation({
   args: {
     name: v.optional(v.string()),
@@ -283,18 +457,21 @@ export const seedRolePresets = internalMutation({
           "users.write",
           "roles.manage",
           "audit.read",
+          "subscriptions.read",
+          "subscriptions.manage",
+          "billing.manage",
           "settings.manage",
         ],
       },
       {
         name: "author",
         description: "Create and maintain content with limited access.",
-        permissions: ["users.read"],
+        permissions: ["users.read", "subscriptions.read"],
       },
       {
         name: "user",
         description: "Default access with minimal administrative permissions.",
-        permissions: [],
+        permissions: ["subscriptions.read"],
       },
     ];
 

@@ -36,11 +36,34 @@ const auditLogs = defineTable({
   .index("action", ["action"])
   .index("actorId", ["actorId"]);
 
+const subscriptionPlans = defineTable({
+  name: v.string(),
+  description: v.optional(v.string()),
+  priceMonthly: v.optional(v.number()),
+  priceYearly: v.optional(v.number()),
+  features: v.array(v.string()),
+  isActive: v.optional(v.boolean()),
+}).index("name", ["name"]);
+
+const subscriptions = defineTable({
+  userId: v.id("users"),
+  planId: v.optional(v.id("subscriptionPlans")),
+  status: v.string(),
+  currentPeriodEnd: v.optional(v.number()),
+  canceledAt: v.optional(v.number()),
+  metadata: v.optional(v.any()),
+})
+  .index("userId", ["userId"])
+  .index("planId", ["planId"])
+  .index("status", ["status"]);
+
 export default defineSchema({
   ...authTables,
   users,
   roles,
   auditLogs,
+  subscriptionPlans,
+  subscriptions,
   numbers: defineTable({
     value: v.number(),
   }),

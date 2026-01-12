@@ -10,6 +10,7 @@ Upty is a Next.js application backed by Convex and Convex Auth. The admin experi
 - Admin dashboard UI with sidebar + topbar shell.
 - User management with role-based gating and CRUD workflows.
 - Account deactivation using a soft-delete flag (`users.isDeactivated`).
+- Subscription plans and user subscriptions for feature access.
 
 ## Admin Dashboard
 
@@ -30,6 +31,13 @@ Upty is a Next.js application backed by Convex and Convex Auth. The admin experi
   - `actorId` (optional users id)
   - `actorName` / `actorEmail` (optional)
   - `metadata` (optional payload)
+- `subscriptionPlans`
+  - `name`, `description`
+  - `priceMonthly`, `priceYearly`
+  - `features`, `isActive`
+- `subscriptions`
+  - `userId`, `planId`, `status`
+  - `currentPeriodEnd`, `canceledAt`, `metadata`
 
 ## Convex Admin Functions
 
@@ -37,6 +45,8 @@ Upty is a Next.js application backed by Convex and Convex Auth. The admin experi
   - `getCurrentUser`
   - `listUsers` (admin-only results)
   - `listRoles` (admin-only results)
+  - `listSubscriptionPlans` (admin-only results)
+  - `listSubscriptions` (admin-only results)
 - Mutations
   - `createUser`
   - `updateUser`
@@ -45,6 +55,11 @@ Upty is a Next.js application backed by Convex and Convex Auth. The admin experi
   - `createRole`
   - `updateRole`
   - `deleteRole`
+  - `createSubscriptionPlan`
+  - `updateSubscriptionPlan`
+  - `deleteSubscriptionPlan`
+  - `createSubscription`
+  - `updateSubscription`
   - `seedRolePresets` (internal, admin/author/user presets)
   - `setUserRole` (internal)
 - Audit

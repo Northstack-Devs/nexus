@@ -75,6 +75,21 @@ const PERMISSIONS = [
     description: "View administrative activity",
   },
   {
+    id: "subscriptions.read",
+    label: "Read subscriptions",
+    description: "View subscription status and plan details",
+  },
+  {
+    id: "subscriptions.manage",
+    label: "Manage subscriptions",
+    description: "Create and update subscriptions",
+  },
+  {
+    id: "billing.manage",
+    label: "Manage billing",
+    description: "Handle billing operations and invoices",
+  },
+  {
     id: "settings.manage",
     label: "Manage settings",
     description: "Update system configuration",
