@@ -204,21 +204,18 @@ export const seedRolePresets = internalMutation({
         ],
       },
       {
-        name: "manager",
-        description: "Manage users and review audit logs.",
-        permissions: ["users.read", "users.write", "audit.read"],
-      },
-      {
-        name: "support",
-        description: "Read-only access to users and audit logs.",
-        permissions: ["users.read", "audit.read"],
-      },
-      {
-        name: "analyst",
-        description: "View users and system analytics.",
+        name: "author",
+        description: "Create and maintain content with limited access.",
         permissions: ["users.read"],
       },
+      {
+        name: "user",
+        description: "Default access with minimal administrative permissions.",
+        permissions: [],
+      },
     ];
+
+    const allowedNames = new Set(presets.map((preset) => preset.name));
 
     for (const preset of presets) {
       const existing = await ctx.db
@@ -229,6 +226,13 @@ export const seedRolePresets = internalMutation({
         await ctx.db.patch(existing._id, preset);
       } else {
         await ctx.db.insert("roles", preset);
+      }
+    }
+
+    const existingRoles = await ctx.db.query("roles").collect();
+    for (const role of existingRoles) {
+      if (!allowedNames.has(role.name)) {
+        await ctx.db.delete(role._id);
       }
     }
   },
