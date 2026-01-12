@@ -43,15 +43,7 @@ export const getCurrentUser = query({
 export const listUsers = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
-      return [];
-    }
-
-    const viewer = await ctx.db.get("users", userId);
-    if (!viewer || viewer.role !== "admin") {
-      return [];
-    }
+    await requireAdmin(ctx);
 
     const users = await ctx.db.query("users").order("desc").take(50);
     return users.map((user) => ({
