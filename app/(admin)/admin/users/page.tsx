@@ -20,6 +20,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMemo, useState } from "react";
 
 interface UserRow {
@@ -56,6 +63,10 @@ export default function AdminDashboardPage() {
     api.admin.listUsers,
     currentUser?.role === "admin" ? {} : "skip",
   ) as UserRow[] | undefined;
+  const roles = useQuery(
+    api.admin.listRoles,
+    currentUser?.role === "admin" ? {} : "skip",
+  );
   const createUser = useMutation(api.admin.createUser);
   const updateUser = useMutation(api.admin.updateUser);
   const deactivateUser = useMutation(api.admin.deactivateUser);
@@ -102,7 +113,7 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (users === undefined) {
+  if (users === undefined || roles === undefined) {
     return (
       <div className="text-sm text-slate-500 dark:text-slate-400">
         Loading users...
@@ -374,16 +385,23 @@ export default function AdminDashboardPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="create-role">Role</Label>
-              <Input
-                id="create-role"
+              <Select
                 value={formState.role}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    role: event.target.value,
-                  }))
+                onValueChange={(value) =>
+                  setFormState((prev) => ({ ...prev, role: value }))
                 }
-              />
+              >
+                <SelectTrigger id="create-role">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role._id} value={role.name}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <DialogFooter className="gap-2">
               <button
@@ -466,16 +484,23 @@ export default function AdminDashboardPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-role">Role</Label>
-              <Input
-                id="edit-role"
+              <Select
                 value={formState.role}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    role: event.target.value,
-                  }))
+                onValueChange={(value) =>
+                  setFormState((prev) => ({ ...prev, role: value }))
                 }
-              />
+              >
+                <SelectTrigger id="edit-role">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role._id} value={role.name}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <DialogFooter className="gap-2">
               <button

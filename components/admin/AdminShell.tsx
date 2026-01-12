@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import {
   Bell,
+  FileText,
   LayoutDashboard,
   ShieldCheck,
   Sparkles,
@@ -73,10 +74,13 @@ export default function AdminShell({
               <ShieldCheck className="h-4 w-4" />
               Roles & permissions
             </Link>
-            <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-900">
-              <Bell className="h-4 w-4" />
+            <Link
+              href="/admin/logs"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-200 hover:translate-x-1"
+            >
+              <FileText className="h-4 w-4" />
               Audit logs
-            </div>
+            </Link>
           </nav>
         </aside>
 

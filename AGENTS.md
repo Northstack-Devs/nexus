@@ -10,7 +10,7 @@
 - Added admin dashboard shell with modern styling and user management UI.
 - Moved user management to `/admin/users` and added overview metrics at `/admin`.
 - Extended `users` table with optional `role` and `isDeactivated` fields in `convex/schema.ts`.
-- Added admin queries and mutations in `convex/admin.ts` for user CRUD and role management.
+- Added admin queries and mutations in `convex/admin.ts` for user CRUD, role management, and audit logging.
 - Seeded role presets via `seedRolePresets` internal mutation (admin/author/user).
 - `/admin` is protected in `middleware.ts` (requires authentication).
 - Added feature overview documentation in `docs/overview.md`.

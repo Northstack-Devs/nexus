@@ -25,10 +25,22 @@ const roles = defineTable({
   permissions: v.array(v.string()),
 }).index("name", ["name"]);
 
+const auditLogs = defineTable({
+  action: v.string(),
+  actorId: v.optional(v.id("users")),
+  actorName: v.optional(v.string()),
+  actorEmail: v.optional(v.string()),
+  targetId: v.optional(v.string()),
+  metadata: v.optional(v.any()),
+})
+  .index("action", ["action"])
+  .index("actorId", ["actorId"]);
+
 export default defineSchema({
   ...authTables,
   users,
   roles,
+  auditLogs,
   numbers: defineTable({
     value: v.number(),
   }),

@@ -1,6 +1,7 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 
 async function requireAdmin(ctx: { db: any; auth: any }) {
   const userId = await getAuthUserId(ctx);
@@ -75,6 +76,60 @@ export const listRoles = query({
   },
 });
 
+async function logAudit(
+  ctx: { db: any; auth: any },
+  action: string,
+  targetId?: string,
+  metadata?: Record<string, unknown>,
+) {
+  const userId = await getAuthUserId(ctx);
+  let actorName: string | undefined;
+  let actorEmail: string | undefined;
+
+  if (userId) {
+    const actor = await ctx.db.get("users", userId);
+    actorName = actor?.name ?? undefined;
+    actorEmail = actor?.email ?? undefined;
+  }
+
+  await ctx.db.insert("auditLogs", {
+    action,
+    actorId: userId ?? undefined,
+    actorName,
+    actorEmail,
+    targetId,
+    metadata,
+  });
+}
+
+export const listAuditLogs = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    action: v.optional(v.string()),
+    startTime: v.optional(v.number()),
+    endTime: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    let query = ctx.db.query("auditLogs").order("desc");
+
+    if (args.action) {
+      query = query.filter((q) => q.eq(q.field("action"), args.action));
+    }
+    if (typeof args.startTime === "number") {
+      const startTime = args.startTime;
+      query = query.filter((q) => q.gte(q.field("_creationTime"), startTime));
+    }
+    if (typeof args.endTime === "number") {
+      const endTime = args.endTime;
+      query = query.filter((q) => q.lte(q.field("_creationTime"), endTime));
+    }
+
+    return await query.paginate(args.paginationOpts);
+  },
+});
+
 export const createRole = mutation({
   args: {
     name: v.string(),
@@ -84,11 +139,17 @@ export const createRole = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
-    return await ctx.db.insert("roles", {
+    const roleId = await ctx.db.insert("roles", {
       name: args.name,
       description: args.description,
       permissions: args.permissions,
     });
+
+    await logAudit(ctx, "role.created", roleId, {
+      name: args.name,
+    });
+
+    return roleId;
   },
 });
 
@@ -107,6 +168,10 @@ export const updateRole = mutation({
       description: args.description,
       permissions: args.permissions,
     });
+
+    await logAudit(ctx, "role.updated", args.roleId, {
+      name: args.name,
+    });
   },
 });
 
@@ -117,6 +182,8 @@ export const deleteRole = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
     await ctx.db.delete(args.roleId);
+
+    await logAudit(ctx, "role.deleted", args.roleId);
   },
 });
 
@@ -131,7 +198,7 @@ export const createUser = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
-    return await ctx.db.insert("users", {
+    const userId = await ctx.db.insert("users", {
       name: args.name,
       email: args.email,
       phone: args.phone,
@@ -139,6 +206,13 @@ export const createUser = mutation({
       role: args.role ?? "user",
       isDeactivated: false,
     });
+
+    await logAudit(ctx, "user.created", userId, {
+      email: args.email ?? null,
+      role: args.role ?? "user",
+    });
+
+    return userId;
   },
 });
 
@@ -161,6 +235,11 @@ export const updateUser = mutation({
       image: args.image,
       role: args.role ?? "user",
     });
+
+    await logAudit(ctx, "user.updated", args.userId, {
+      email: args.email ?? null,
+      role: args.role ?? "user",
+    });
   },
 });
 
@@ -173,6 +252,8 @@ export const deactivateUser = mutation({
     await ctx.db.patch(args.userId, {
       isDeactivated: true,
     });
+
+    await logAudit(ctx, "user.deactivated", args.userId);
   },
 });
 
@@ -185,6 +266,8 @@ export const reactivateUser = mutation({
     await ctx.db.patch(args.userId, {
       isDeactivated: false,
     });
+
+    await logAudit(ctx, "user.reactivated", args.userId);
   },
 });
 
@@ -224,8 +307,14 @@ export const seedRolePresets = internalMutation({
         .first();
       if (existing) {
         await ctx.db.patch(existing._id, preset);
+        await logAudit(ctx, "role.updated", existing._id, {
+          name: preset.name,
+        });
       } else {
-        await ctx.db.insert("roles", preset);
+        const roleId = await ctx.db.insert("roles", preset);
+        await logAudit(ctx, "role.created", roleId, {
+          name: preset.name,
+        });
       }
     }
 
@@ -233,6 +322,9 @@ export const seedRolePresets = internalMutation({
     for (const role of existingRoles) {
       if (!allowedNames.has(role.name)) {
         await ctx.db.delete(role._id);
+        await logAudit(ctx, "role.deleted", role._id, {
+          reason: "seed_reset",
+        });
       }
     }
   },
