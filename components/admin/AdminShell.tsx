@@ -18,6 +18,8 @@ import {
   Bell,
   CreditCard,
   FileText,
+  Github,
+  Info,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -46,7 +48,7 @@ export default function AdminShell({
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <div className="flex min-h-screen">
-        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950 shadow-lg shadow-slate-200/40 dark:shadow-none">
+        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950 shadow-lg shadow-slate-200/40 dark:shadow-none flex flex-col">
           <div className="px-6 py-6">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-sky-500 to-emerald-400 p-[1px]">
@@ -56,10 +58,10 @@ export default function AdminShell({
               </div>
               <div>
                 <span className="text-slate-900 dark:text-white text-lg font-semibold">
-                  Upty Admin
+                  Nexus Admin
                 </span>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Control center
+                  Convex-powered control center
                 </p>
               </div>
             </div>
@@ -108,14 +110,32 @@ export default function AdminShell({
               Settings
             </Link>
           </nav>
+          <div className="mt-auto px-4 pb-6 pt-4 text-xs text-slate-500 dark:text-slate-400 space-y-2">
+            <Link
+              href="/credits"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 transition"
+            >
+              <Info className="h-4 w-4" />
+              Credits
+            </Link>
+            <a
+              href="https://github.com/Northstack-Devs/nexus"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 transition"
+            >
+              <Github className="h-4 w-4" />
+              GitHub
+            </a>
+          </div>
         </aside>
 
         <div className="flex-1 flex flex-col">
           <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/80 backdrop-blur flex items-center justify-between px-6">
             <div>
-              <h1 className="text-lg font-semibold">Admin dashboard</h1>
+              <h1 className="text-lg font-semibold">Nexus admin dashboard</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Manage users and configuration
+                Monitor Nexus users and configuration
               </p>
             </div>
             <div className="flex items-center gap-4">

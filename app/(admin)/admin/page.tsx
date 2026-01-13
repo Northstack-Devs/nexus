@@ -88,9 +88,9 @@ export default function AdminOverviewPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Dashboard overview</h2>
+        <h2 className="text-2xl font-semibold">Nexus dashboard overview</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Track the latest admin metrics and quick actions.
+          Track Nexus admin metrics and quick actions.
         </p>
       </div>
 

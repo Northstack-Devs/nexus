@@ -2,6 +2,7 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -149,18 +150,21 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
     flow === "signIn"
       ? "Welcome back"
       : flow === "signUp"
-        ? "Create your account"
-        : "Reset your password";
+        ? "Create your Nexus account"
+        : "Reset your Nexus password";
 
   const subtitle =
     flow === "signIn"
-      ? "Sign in to manage your workspace."
+      ? "Sign in to Nexus, the Convex-powered admin dashboard starter."
       : flow === "signUp"
-        ? "Choose a username and set a strong password."
-        : "We will send a password reset link to your email.";
+        ? "Create credentials to launch your Nexus workspace."
+        : "We will send a Nexus reset link to your email.";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 flex flex-col items-center justify-center gap-6 px-4 py-12">
+      <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-[0.4em]">
+        NEXUS
+      </h1>
       <Card className="w-full max-w-lg border-slate-200/70 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 shadow-2xl shadow-slate-200/40 dark:shadow-black/40 backdrop-blur">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-3xl font-semibold text-slate-900 dark:text-white">
@@ -169,6 +173,9 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
           <CardDescription className="text-sm text-slate-600 dark:text-slate-400">
             {subtitle}
           </CardDescription>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Secure sign-in for the Nexus admin dashboard.
+          </p>
           {flow !== "reset" && (
             <Tabs
               value={flow}
@@ -424,6 +431,23 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
               </Alert>
             )}
           </form>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <Link
+              href="/credits"
+              className="underline underline-offset-4 hover:text-slate-700 dark:hover:text-slate-200"
+            >
+              Credits
+            </Link>
+            <span className="text-slate-300 dark:text-slate-700">•</span>
+            <a
+              href="https://github.com/Northstack-Devs/nexus"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4 hover:text-slate-700 dark:hover:text-slate-200"
+            >
+              GitHub
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>
