@@ -17,7 +17,8 @@ const users = defineTable({
   isDeactivated: v.optional(v.boolean()),
 })
   .index("email", ["email"])
-  .index("phone", ["phone"]);
+  .index("phone", ["phone"])
+  .index("name", ["name"]);
 
 const roles = defineTable({
   name: v.string(),

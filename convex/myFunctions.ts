@@ -31,6 +31,23 @@ export const listNumbers = query({
   },
 });
 
+export const checkUsernameAvailability = query({
+  args: {
+    username: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const normalized = args.username.trim().toLowerCase();
+    if (normalized.length < 3) {
+      return false;
+    }
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("name", (query) => query.eq("name", normalized))
+      .first();
+    return existing === null;
+  },
+});
+
 // You can write data to the database via a mutation:
 export const addNumber = mutation({
   // Validators for arguments.

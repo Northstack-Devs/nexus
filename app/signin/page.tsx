@@ -1,118 +1,433 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import {
+  AlertCircle,
+  BadgeCheck,
+  KeyRound,
+  Lock,
+  Mail,
+  User,
+} from "lucide-react";
+import { api } from "@/convex/_generated/api";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export default function SignIn() {
+type AuthFlow = "signIn" | "signUp" | "reset";
+
+type PasswordCheck = {
+  label: string;
+  passes: boolean;
+};
+
+type PasswordStrength = {
+  score: number;
+  label: string;
+  textClass: string;
+  barClass: string;
+  checks: PasswordCheck[];
+};
+
+const strengthScale = [
+  { label: "Very weak", textClass: "text-rose-600", barClass: "bg-rose-500" },
+  { label: "Weak", textClass: "text-rose-600", barClass: "bg-rose-500" },
+  { label: "Fair", textClass: "text-amber-600", barClass: "bg-amber-500" },
+  { label: "Good", textClass: "text-lime-600", barClass: "bg-lime-500" },
+  {
+    label: "Strong",
+    textClass: "text-emerald-600",
+    barClass: "bg-emerald-500",
+  },
+];
+
+const buildPasswordStrength = (password: string): PasswordStrength => {
+  const checks: PasswordCheck[] = [
+    { label: "At least 8 characters", passes: password.length >= 8 },
+    { label: "Uppercase letter", passes: /[A-Z]/.test(password) },
+    { label: "Lowercase letter", passes: /[a-z]/.test(password) },
+    { label: "Number or symbol", passes: /[0-9]|[^A-Za-z0-9]/.test(password) },
+  ];
+  const score = checks.filter((check) => check.passes).length;
+  const strength = strengthScale[score];
+  return {
+    score,
+    label: strength.label,
+    textClass: strength.textClass,
+    barClass: strength.barClass,
+    checks,
+  };
+};
+
+type AuthPageProps = {
+  initialFlow?: AuthFlow;
+};
+
+export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
   const { signIn } = useAuthActions();
-  const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  const [flow, setFlow] = useState<AuthFlow>(initialFlow);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [rememberUsername, setRememberUsername] = useState(false);
+
+  useEffect(() => {
+    const storedEmail = localStorage.getItem("rememberedUsername");
+    if (storedEmail) {
+      setEmail(storedEmail);
+      setRememberUsername(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    setFlow(initialFlow);
+  }, [initialFlow]);
+
+  useEffect(() => {
+    setError(null);
+    setNotice(null);
+  }, [flow]);
+
+  const applyFlowChange = (nextFlow: AuthFlow) => {
+    if (nextFlow === "signUp") {
+      router.push("/signup");
+    }
+    if (nextFlow === "signIn") {
+      router.push("/signin");
+    }
+    setFlow(nextFlow);
+  };
+
+  const normalizedUsername = useMemo(
+    () => username.trim().toLowerCase(),
+    [username],
+  );
+  const shouldCheckUsername =
+    flow === "signUp" && normalizedUsername.length >= 3;
+  const usernameAvailable = useQuery(
+    api.myFunctions.checkUsernameAvailability,
+    shouldCheckUsername ? { username: normalizedUsername } : "skip",
+  );
+
+  const passwordStrength = useMemo(
+    () => buildPasswordStrength(password),
+    [password],
+  );
+
+  const usernameStatus = !shouldCheckUsername
+    ? "idle"
+    : usernameAvailable === undefined
+      ? "checking"
+      : usernameAvailable
+        ? "available"
+        : "taken";
+
+  const canSubmit =
+    flow !== "signUp" || (shouldCheckUsername && usernameAvailable === true);
+
+  const title =
+    flow === "signIn"
+      ? "Welcome back"
+      : flow === "signUp"
+        ? "Create your account"
+        : "Reset your password";
+
+  const subtitle =
+    flow === "signIn"
+      ? "Sign in to manage your workspace."
+      : flow === "signUp"
+        ? "Choose a username and set a strong password."
+        : "We will send a password reset link to your email.";
+
   return (
-    <div className="flex flex-col gap-8 w-full max-w-lg mx-auto h-screen justify-center items-center px-4">
-      <div className="text-center flex flex-col items-center gap-4">
-        <div className="flex items-center gap-6">
-          <Image
-            src="/convex.svg"
-            alt="Convex Logo"
-            width={90}
-            height={90}
-          />
-          <div className="w-px h-20 bg-slate-300 dark:bg-slate-600"></div>
-          <Image
-            src="/nextjs-icon-light-background.svg"
-            alt="Next.js Logo"
-            width={90}
-            height={90}
-            className="dark:hidden"
-          />
-          <Image
-            src="/nextjs-icon-dark-background.svg"
-            alt="Next.js Logo"
-            width={90}
-            height={90}
-            className="hidden dark:block"
-          />
-        </div>
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200">
-          Convex + Next.js + Convex Auth
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">
-          This demo uses Convex Auth for authentication, so you will need to
-          sign in or sign up to access the demo.
-        </p>
-      </div>
-      <form
-        className="flex flex-col gap-4 w-full bg-slate-100 dark:bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-300 dark:border-slate-600"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setLoading(true);
-          setError(null);
-          const formData = new FormData(e.target as HTMLFormElement);
-          formData.set("flow", flow);
-          void signIn("password", formData)
-            .catch((error) => {
-              setError(error.message);
-              setLoading(false);
-            })
-            .then(() => {
-              router.push("/");
-            });
-        }}
-      >
-        <input
-          className="bg-white dark:bg-slate-900 text-foreground rounded-lg p-3 border border-slate-300 dark:border-slate-600 focus:border-slate-500 dark:focus:border-slate-400 focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-700 outline-none transition-all placeholder:text-slate-400"
-          type="email"
-          name="email"
-          placeholder="Email"
-          required
-        />
-        <div className="flex flex-col gap-1">
-          <input
-            className="bg-white dark:bg-slate-900 text-foreground rounded-lg p-3 border border-slate-300 dark:border-slate-600 focus:border-slate-500 dark:focus:border-slate-400 focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-700 outline-none transition-all placeholder:text-slate-400"
-            type="password"
-            name="password"
-            placeholder="Password"
-            minLength={8}
-            required
-          />
-          {flow === "signUp" && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 px-1">
-              Password must be at least 8 characters
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 flex items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-lg border-slate-200/70 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 shadow-2xl shadow-slate-200/40 dark:shadow-black/40 backdrop-blur">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-3xl font-semibold text-slate-900 dark:text-white">
+            {title}
+          </CardTitle>
+          <CardDescription className="text-sm text-slate-600 dark:text-slate-400">
+            {subtitle}
+          </CardDescription>
+          {flow !== "reset" && (
+            <Tabs
+              value={flow}
+              onValueChange={(value) => applyFlowChange(value as AuthFlow)}
+              className="mt-2"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signIn">Sign in</TabsTrigger>
+                <TabsTrigger value="signUp">Sign up</TabsTrigger>
+              </TabsList>
+            </Tabs>
           )}
-        </div>
-        <button
-          className="bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-semibold rounded-lg py-3 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? "Loading..." : flow === "signIn" ? "Sign in" : "Sign up"}
-        </button>
-        <div className="flex flex-row gap-2 text-sm justify-center">
-          <span className="text-slate-600 dark:text-slate-400">
-            {flow === "signIn"
-              ? "Don't have an account?"
-              : "Already have an account?"}
-          </span>
-          <span
-            className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 font-medium underline decoration-2 underline-offset-2 hover:no-underline cursor-pointer transition-colors"
-            onClick={() => setFlow(flow === "signIn" ? "signUp" : "signIn")}
+        </CardHeader>
+        <CardContent>
+          <form
+            className="space-y-5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setLoading(true);
+              setError(null);
+              setNotice(null);
+
+              const formData = new FormData(event.target as HTMLFormElement);
+              formData.set("flow", flow);
+              formData.set("email", email.trim());
+
+              if (flow === "signUp") {
+                formData.set("name", normalizedUsername);
+              }
+
+              if (flow === "signIn") {
+                if (rememberUsername) {
+                  localStorage.setItem("rememberedUsername", email.trim());
+                } else {
+                  localStorage.removeItem("rememberedUsername");
+                }
+              }
+
+              void signIn("password", formData)
+                .then(() => {
+                  if (flow === "reset") {
+                    setNotice(
+                      "If an account exists, a reset link has been sent.",
+                    );
+                    return;
+                  }
+                  router.push("/");
+                })
+                .catch((signInError) => {
+                  setError(signInError.message);
+                })
+                .finally(() => {
+                  setLoading(false);
+                });
+            }}
           >
-            {flow === "signIn" ? "Sign up" : "Sign in"}
-          </span>
-        </div>
-        {error && (
-          <div className="bg-rose-500/10 border border-rose-500/30 dark:border-rose-500/50 rounded-lg p-4">
-            <p className="text-rose-700 dark:text-rose-300 font-medium text-sm break-words">
-              Error: {error}
-            </p>
-          </div>
-        )}
-      </form>
+            <div className="space-y-2">
+              <Label
+                htmlFor="email"
+                className="text-slate-700 dark:text-slate-300"
+              >
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  id="email"
+                  className="pl-10"
+                  type="email"
+                  name="email"
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </div>
+            </div>
+
+            {flow === "signUp" && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="username"
+                  className="text-slate-700 dark:text-slate-300"
+                >
+                  Username
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    id="username"
+                    className="pl-10"
+                    type="text"
+                    name="name"
+                    placeholder="Choose a unique username"
+                    autoComplete="username"
+                    required
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                  />
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {usernameStatus === "idle" && "Use at least 3 characters."}
+                  {usernameStatus === "checking" && "Checking availability..."}
+                  {usernameStatus === "available" && "Username is available."}
+                  {usernameStatus === "taken" && "Username is taken."}
+                </div>
+              </div>
+            )}
+
+            {flow !== "reset" && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="password"
+                  className="text-slate-700 dark:text-slate-300"
+                >
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    id="password"
+                    className="pl-10"
+                    type="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    minLength={8}
+                    autoComplete={
+                      flow === "signUp" ? "new-password" : "current-password"
+                    }
+                    required
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                  />
+                </div>
+                {flow === "signUp" && (
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/70 p-3">
+                    <div className="flex items-center justify-between text-xs font-medium">
+                      <span className="text-slate-600 dark:text-slate-300">
+                        Password strength
+                      </span>
+                      <span className={passwordStrength.textClass}>
+                        {passwordStrength.label}
+                      </span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-4 gap-2">
+                      {Array.from({ length: 4 }).map((_, index) => (
+                        <span
+                          key={`strength-${index}`}
+                          className={`h-1.5 rounded-full transition-all ${
+                            index < passwordStrength.score
+                              ? passwordStrength.barClass
+                              : "bg-slate-200 dark:bg-slate-800"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <div className="mt-3 grid gap-1 text-xs text-slate-500 dark:text-slate-400">
+                      {passwordStrength.checks.map((check) => (
+                        <span
+                          key={check.label}
+                          className={
+                            check.passes
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : undefined
+                          }
+                        >
+                          {check.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {flow === "signIn" && (
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="remember-username"
+                    checked={rememberUsername}
+                    onCheckedChange={(checked) =>
+                      setRememberUsername(Boolean(checked))
+                    }
+                  />
+                  <Label
+                    htmlFor="remember-username"
+                    className="text-slate-600 dark:text-slate-400"
+                  >
+                    Remember username
+                  </Label>
+                </div>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-slate-700 dark:text-slate-300"
+                  onClick={() => setFlow("reset")}
+                >
+                  Forgot password?
+                </Button>
+              </div>
+            )}
+
+            <Button
+              className="w-full"
+              type="submit"
+              disabled={loading || !canSubmit}
+            >
+              {loading
+                ? "Working..."
+                : flow === "signIn"
+                  ? "Sign in"
+                  : flow === "signUp"
+                    ? "Create account"
+                    : "Send reset link"}
+              {flow === "reset" && <KeyRound className="h-4 w-4" />}
+            </Button>
+
+            {flow === "reset" && (
+              <div className="flex flex-row gap-2 text-sm justify-center">
+                <span className="text-slate-600 dark:text-slate-400">
+                  Remembered your password?
+                </span>
+                <button
+                  className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium underline decoration-2 underline-offset-2 hover:no-underline"
+                  type="button"
+                  onClick={() => applyFlowChange("signIn")}
+                >
+                  Back to sign in
+                </button>
+              </div>
+            )}
+
+            {notice && (
+              <Alert className="border-emerald-500/30 bg-emerald-500/10">
+                <BadgeCheck className="h-4 w-4 text-emerald-600" />
+                <AlertTitle className="text-emerald-700">
+                  Check your inbox
+                </AlertTitle>
+                <AlertDescription className="text-emerald-700">
+                  {notice}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Unable to sign in</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
+}
+
+export default function SignInPage() {
+  return <AuthPage />;
 }
