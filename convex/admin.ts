@@ -1,4 +1,9 @@
-import { query, mutation, internalMutation } from "./_generated/server";
+import {
+  query,
+  mutation,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
@@ -603,6 +608,13 @@ export const updateEmailSettings = mutation({
     }
 
     return await ctx.db.insert("emailSettings", payload);
+  },
+});
+
+export const getEmailSettingsInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("emailSettings").first();
   },
 });
 

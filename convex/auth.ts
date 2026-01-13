@@ -1,5 +1,6 @@
 import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 const DEFAULT_RESET_SUBJECT = "Reset your Nexus password";
 const DEFAULT_RESET_HTML = `
@@ -18,25 +19,33 @@ const renderTemplate = (template: string, variables: Record<string, string>) =>
     return variables[key] ?? "";
   });
 
-const fetchEmailSettings = async (db?: any) => {
-  if (!db) {
-    return null;
+type EmailSettingsContext = {
+  db?: any;
+  runQuery?: (query: any, args: Record<string, unknown>) => Promise<any>;
+};
+
+const fetchEmailSettings = async (ctx?: EmailSettingsContext) => {
+  if (ctx?.db) {
+    return await ctx.db.query("emailSettings").first();
   }
-  return await db.query("emailSettings").first();
+  if (ctx?.runQuery) {
+    return await ctx.runQuery(internal.admin.getEmailSettingsInternal, {});
+  }
+  return null;
 };
 
 const sendEmail = async ({
-  db,
+  ctx,
   to,
   subject,
   html,
 }: {
-  db?: any;
+  ctx?: EmailSettingsContext;
   to: string;
   subject: string;
   html: string;
 }) => {
-  const settings = await fetchEmailSettings(db);
+  const settings = await fetchEmailSettings(ctx);
   const resendApiKey = settings?.resendApiKey ?? process.env.RESEND_API_KEY;
   if (!resendApiKey) {
     return;
@@ -71,9 +80,9 @@ const passwordResetProvider = {
       identifier: string;
       url: string;
     },
-    ctx?: { db: any },
+    ctx?: EmailSettingsContext,
   ) => {
-    const settings = await fetchEmailSettings(ctx?.db);
+    const settings = await fetchEmailSettings(ctx);
     const subject = settings?.resetSubject ?? DEFAULT_RESET_SUBJECT;
     const html = renderTemplate(settings?.resetHtml ?? DEFAULT_RESET_HTML, {
       resetUrl: url,
@@ -81,7 +90,7 @@ const passwordResetProvider = {
     });
 
     await sendEmail({
-      db: ctx?.db,
+      ctx,
       to: identifier,
       subject,
       html,
@@ -121,7 +130,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         return;
       }
 
-      const settings = await fetchEmailSettings(ctx.db);
+      const settings = await fetchEmailSettings({ db: ctx.db });
       const subject = settings?.welcomeSubject ?? DEFAULT_WELCOME_SUBJECT;
       const nameSuffix = user.name ? ` ${user.name}` : "";
       const html = renderTemplate(
@@ -133,7 +142,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       );
 
       await sendEmail({
-        db: ctx.db,
+        ctx: { db: ctx.db },
         to: user.email,
         subject,
         html,
