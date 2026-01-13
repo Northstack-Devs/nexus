@@ -394,17 +394,21 @@ export const updateUser = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
-    await ctx.db.patch(args.userId, {
+    const updates: any = {
       name: args.name,
       email: args.email,
       phone: args.phone,
       image: args.image,
-      role: args.role ?? "user",
-    });
+    };
+    if (args.role !== undefined) {
+      updates.role = args.role;
+    }
+
+    await ctx.db.patch(args.userId, updates);
 
     await logAudit(ctx, "user.updated", args.userId, {
       email: args.email ?? null,
-      role: args.role ?? "user",
+      role: args.role,
     });
   },
 });
@@ -499,6 +503,26 @@ export const seedRolePresets = internalMutation({
   },
 });
 
+export const updateMyProfile = mutation({
+  args: {
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    await ctx.db.patch(userId, {
+      name: args.name,
+      email: args.email,
+      phone: args.phone,
+    });
+  },
+});
+
 export const setUserRole = internalMutation({
   args: {
     userId: v.id("users"),
@@ -507,6 +531,29 @@ export const setUserRole = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.userId, {
       role: args.role,
+    });
+  },
+});
+
+export const generateAvatarUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const updateAvatar = mutation({
+  args: {
+    storageId: v.optional(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    await ctx.db.patch(userId, {
+      image: args.storageId ?? undefined,
     });
   },
 });

@@ -7,7 +7,7 @@ import { authTables } from "@convex-dev/auth/server";
 // The schema provides more precise TypeScript types.
 const users = defineTable({
   name: v.optional(v.string()),
-  image: v.optional(v.string()),
+  image: v.optional(v.union(v.string(), v.id("_storage"))),
   email: v.optional(v.string()),
   emailVerificationTime: v.optional(v.number()),
   phone: v.optional(v.string()),

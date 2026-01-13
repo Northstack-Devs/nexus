@@ -6,12 +6,24 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
   Bell,
   CreditCard,
   FileText,
   LayoutDashboard,
+  LogOut,
+  Settings,
   ShieldCheck,
   Sparkles,
+  User,
   Users,
 } from "lucide-react";
 
@@ -28,6 +40,21 @@ export default function AdminShell({
   const initials = (currentUser?.name ?? currentUser?.email ?? "U")
     .slice(0, 2)
     .toUpperCase();
+
+  const getAvatarUrl = () => {
+    if (currentUser?.image) {
+      if (
+        typeof currentUser.image === "string" &&
+        currentUser.image.startsWith("http")
+      ) {
+        return currentUser.image;
+      }
+      return `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${currentUser.image}`;
+    }
+    return null;
+  };
+
+  const avatarUrl = getAvatarUrl();
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
@@ -86,6 +113,13 @@ export default function AdminShell({
               <FileText className="h-4 w-4" />
               Audit logs
             </Link>
+            <Link
+              href="/admin/settings"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all duration-200 hover:translate-x-1"
+            >
+              <Settings className="h-4 w-4" />
+              Settings
+            </Link>
           </nav>
         </aside>
 
@@ -101,31 +135,59 @@ export default function AdminShell({
               <button className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-800 transition">
                 <Bell className="h-4 w-4" />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500 text-white flex items-center justify-center text-xs font-semibold">
-                  {initials}
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">
-                    {currentUser?.name ?? currentUser?.email ?? "Guest"}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {currentUser?.role ?? "viewer"}
-                  </p>
-                </div>
-              </div>
-              {isAuthenticated && (
-                <button
-                  className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 px-3 py-2 rounded-md text-xs font-semibold hover:bg-slate-700 dark:hover:bg-slate-200 transition"
-                  onClick={() =>
-                    void signOut().then(() => {
-                      router.push("/signin");
-                    })
-                  }
-                >
-                  Sign out
-                </button>
-              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg px-2 py-1.5 transition">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={avatarUrl ?? undefined} />
+                      <AvatarFallback className="bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500 text-white text-xs font-semibold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-left">
+                      <p className="text-sm font-medium">
+                        {currentUser?.name ?? currentUser?.email ?? "Guest"}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {currentUser?.role ?? "viewer"}
+                      </p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">
+                        {currentUser?.name ?? currentUser?.email ?? "Guest"}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {currentUser?.email ?? ""}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/settings">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {isAuthenticated && (
+                    <DropdownMenuItem
+                      className="text-red-600 dark:text-red-400"
+                      onClick={() =>
+                        void signOut().then(() => {
+                          router.push("/signin");
+                        })
+                      }
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign out</span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
           <main className="flex-1 p-6">{children}</main>
