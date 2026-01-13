@@ -4,7 +4,7 @@ import { usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Clock, FileText } from "lucide-react";
+import { Clock, FileText, Loader2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
 const PAGE_SIZE = 30;
@@ -81,7 +81,8 @@ export default function AdminLogsPage() {
 
   if (currentUser === undefined) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading admin profile...
       </div>
     );
@@ -243,7 +244,10 @@ export default function AdminLogsPage() {
         )}
         {status === "LoadingMore" && (
           <div className="p-4 text-xs text-slate-400 dark:text-slate-500">
-            Loading more logs...
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Loading more logs...
+            </span>
           </div>
         )}
       </div>

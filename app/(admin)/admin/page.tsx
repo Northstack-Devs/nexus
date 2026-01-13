@@ -2,7 +2,14 @@
 
 import { usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { CreditCard, ShieldCheck, UserCheck, Users, UserX } from "lucide-react";
+import {
+  CreditCard,
+  Loader2,
+  ShieldCheck,
+  UserCheck,
+  Users,
+  UserX,
+} from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 
@@ -43,7 +50,8 @@ export default function AdminOverviewPage() {
 
   if (currentUser === undefined) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading admin profile...
       </div>
     );
@@ -70,7 +78,8 @@ export default function AdminOverviewPage() {
 
   if (users === undefined || roles === undefined || !metrics) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading overview...
       </div>
     );

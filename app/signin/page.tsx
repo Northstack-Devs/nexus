@@ -8,6 +8,7 @@ import {
   AlertCircle,
   BadgeCheck,
   KeyRound,
+  Loader2,
   Lock,
   Mail,
   User,
@@ -377,6 +378,7 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
               type="submit"
               disabled={loading || !canSubmit}
             >
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {loading
                 ? "Working..."
                 : flow === "signIn"
@@ -384,7 +386,7 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
                   : flow === "signUp"
                     ? "Create account"
                     : "Send reset link"}
-              {flow === "reset" && <KeyRound className="h-4 w-4" />}
+              {flow === "reset" && !loading && <KeyRound className="h-4 w-4" />}
             </Button>
 
             {flow === "reset" && (

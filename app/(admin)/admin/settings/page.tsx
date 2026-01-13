@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useEffect, useState } from "react";
-import { User, Mail, Phone, Save, Upload, X } from "lucide-react";
+import { Loader2, Mail, Phone, Save, Upload, User, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,8 @@ export default function AdminSettingsPage() {
 
   if (currentUser === undefined) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading profile...
       </div>
     );
@@ -253,7 +254,11 @@ export default function AdminSettingsPage() {
                     asChild
                   >
                     <span className="flex items-center gap-2">
-                      <Upload className="h-3 w-3" />
+                      {isUploading ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Upload className="h-3 w-3" />
+                      )}
                       {isUploading ? "Uploading..." : "Upload"}
                     </span>
                   </Button>
@@ -366,7 +371,11 @@ export default function AdminSettingsPage() {
                 disabled={isSaving}
                 className="w-full sm:w-auto"
               >
-                <Save className="h-4 w-4 mr-2" />
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
                 {isSaving ? "Saving..." : "Save changes"}
               </Button>
             </div>

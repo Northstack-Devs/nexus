@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CreditCard, Pencil, Plus, Users } from "lucide-react";
+import { CreditCard, Loader2, Pencil, Plus, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const PLAN_PAGE_SIZE = 10;
@@ -165,7 +165,8 @@ export default function AdminSubscriptionsPage() {
 
   if (currentUser === undefined) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading admin profile...
       </div>
     );
@@ -192,7 +193,8 @@ export default function AdminSubscriptionsPage() {
 
   if (users === undefined) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading subscriptions...
       </div>
     );
@@ -515,7 +517,12 @@ export default function AdminSubscriptionsPage() {
                 Load more
               </button>
             )}
-            {planStatus === "LoadingMore" && <span>Loading...</span>}
+            {planStatus === "LoadingMore" && (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading...
+              </span>
+            )}
           </div>
         </div>
 
@@ -663,7 +670,10 @@ export default function AdminSubscriptionsPage() {
               </button>
             )}
             {subscriptionStatusState === "LoadingMore" && (
-              <span>Loading...</span>
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading...
+              </span>
             )}
           </div>
         </div>

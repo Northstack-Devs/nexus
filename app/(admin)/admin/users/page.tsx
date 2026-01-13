@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import {
+  Loader2,
   Pencil,
   Plus,
   ShieldCheck,
@@ -88,7 +89,8 @@ export default function AdminDashboardPage() {
 
   if (currentUser === undefined) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading admin profile...
       </div>
     );
@@ -115,7 +117,8 @@ export default function AdminDashboardPage() {
 
   if (users === undefined || roles === undefined) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading users...
       </div>
     );
@@ -416,7 +419,10 @@ export default function AdminDashboardPage() {
                 disabled={isSaving || isFormEmpty}
                 className="rounded-md bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 px-3 py-2 text-xs font-semibold hover:bg-slate-700 dark:hover:bg-slate-200 transition disabled:opacity-50"
               >
-                {isSaving ? "Saving..." : "Create"}
+                <span className="inline-flex items-center gap-2">
+                  {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
+                  {isSaving ? "Saving..." : "Create"}
+                </span>
               </button>
             </DialogFooter>
           </form>
@@ -515,7 +521,10 @@ export default function AdminDashboardPage() {
                 disabled={isSaving}
                 className="rounded-md bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 px-3 py-2 text-xs font-semibold hover:bg-slate-700 dark:hover:bg-slate-200 transition disabled:opacity-50"
               >
-                {isSaving ? "Saving..." : "Save changes"}
+                <span className="inline-flex items-center gap-2">
+                  {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
+                  {isSaving ? "Saving..." : "Save changes"}
+                </span>
               </button>
             </DialogFooter>
           </form>

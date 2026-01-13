@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 interface RoleRow {
@@ -181,7 +181,8 @@ export default function RolesPage() {
 
   if (currentUser === undefined) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading admin profile...
       </div>
     );
@@ -208,7 +209,8 @@ export default function RolesPage() {
 
   if (roles === undefined || users === undefined) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading roles...
       </div>
     );
@@ -528,7 +530,10 @@ export default function RolesPage() {
                 disabled={isSaving || formState.name.trim().length === 0}
                 className="rounded-md bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 px-3 py-2 text-xs font-semibold hover:bg-slate-700 dark:hover:bg-slate-200 transition disabled:opacity-50"
               >
-                {isSaving ? "Saving..." : "Save role"}
+                <span className="inline-flex items-center gap-2">
+                  {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
+                  {isSaving ? "Saving..." : "Save role"}
+                </span>
               </button>
             </DialogFooter>
           </form>
