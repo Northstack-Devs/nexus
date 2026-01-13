@@ -2,7 +2,7 @@
 
 ## Summary
 
-Upty is a Next.js + Convex dashboard template with Convex Auth. The admin experience lives in the `(admin)` route group and is intended as a starting point for internal tooling or SaaS dashboards.
+Nexus is a Next.js + Convex admin dashboard starter with Convex Auth. The admin experience lives in the `(admin)` route group and is intended as a starting point for internal tooling or SaaS dashboards.
 
 ## Routing
 

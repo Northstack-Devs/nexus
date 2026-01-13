@@ -1,6 +1,6 @@
-# Upty Dashboard Template
+# Nexus Admin Dashboard Starter
 
-Upty is a Next.js admin dashboard template backed by Convex and Convex Auth. It ships with a modern admin shell, user management workflows, role presets, and authentication screens ready to customize.
+Nexus is a Next.js admin dashboard starter backed by Convex, Convex Auth, and a set of frontend UI libraries. It ships with a modern admin shell, user management workflows, role presets, and authentication screens ready to customize.
 
 ## Routes
 

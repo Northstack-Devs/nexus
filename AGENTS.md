@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-- Upty is a Next.js dashboard template backed by Convex and Convex Auth.
+- Nexus is a Next.js dashboard starter backed by Convex and Convex Auth.
 - Admin dashboard overview lives under `app/(admin)/admin` with layout in `app/(admin)/layout.tsx`.
 - `/` redirects to `/admin` when authenticated, otherwise `/signin`.
 
