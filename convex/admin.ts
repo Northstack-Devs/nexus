@@ -515,6 +515,97 @@ export const seedRolePresets = internalMutation({
   },
 });
 
+const normalizeOptional = (value?: string) => {
+  if (value === undefined) {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+export const getEmailSettings = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+
+    const settings = await ctx.db.query("emailSettings").first();
+    return {
+      provider: settings?.provider ?? "resend",
+      resendApiKeySet: Boolean(settings?.resendApiKey),
+      from: settings?.from ?? null,
+      replyTo: settings?.replyTo ?? null,
+      resetSubject: settings?.resetSubject ?? null,
+      resetHtml: settings?.resetHtml ?? null,
+      welcomeSubject: settings?.welcomeSubject ?? null,
+      welcomeHtml: settings?.welcomeHtml ?? null,
+      updatedAt: settings?.updatedAt ?? null,
+    };
+  },
+});
+
+export const updateEmailSettings = mutation({
+  args: {
+    provider: v.optional(v.string()),
+    resendApiKey: v.optional(v.string()),
+    from: v.optional(v.string()),
+    replyTo: v.optional(v.string()),
+    resetSubject: v.optional(v.string()),
+    resetHtml: v.optional(v.string()),
+    welcomeSubject: v.optional(v.string()),
+    welcomeHtml: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const settings = await ctx.db.query("emailSettings").first();
+    const nextFrom =
+      args.from !== undefined ? normalizeOptional(args.from) : settings?.from;
+    const nextReplyTo =
+      args.replyTo !== undefined
+        ? normalizeOptional(args.replyTo)
+        : settings?.replyTo;
+    const nextResendApiKey =
+      args.resendApiKey !== undefined
+        ? normalizeOptional(args.resendApiKey)
+        : settings?.resendApiKey;
+    const nextResetSubject =
+      args.resetSubject !== undefined
+        ? normalizeOptional(args.resetSubject)
+        : settings?.resetSubject;
+    const nextResetHtml =
+      args.resetHtml !== undefined
+        ? normalizeOptional(args.resetHtml)
+        : settings?.resetHtml;
+    const nextWelcomeSubject =
+      args.welcomeSubject !== undefined
+        ? normalizeOptional(args.welcomeSubject)
+        : settings?.welcomeSubject;
+    const nextWelcomeHtml =
+      args.welcomeHtml !== undefined
+        ? normalizeOptional(args.welcomeHtml)
+        : settings?.welcomeHtml;
+
+    const payload = {
+      provider: args.provider ?? settings?.provider ?? "resend",
+      resendApiKey: nextResendApiKey,
+      from: nextFrom,
+      replyTo: nextReplyTo,
+      resetSubject: nextResetSubject,
+      resetHtml: nextResetHtml,
+      welcomeSubject: nextWelcomeSubject,
+      welcomeHtml: nextWelcomeHtml,
+      updatedAt: Date.now(),
+    };
+
+    if (settings) {
+      await ctx.db.patch(settings._id, payload);
+      return settings._id;
+    }
+
+    return await ctx.db.insert("emailSettings", payload);
+  },
+});
+
 export const updateMyProfile = mutation({
   args: {
     name: v.optional(v.string()),

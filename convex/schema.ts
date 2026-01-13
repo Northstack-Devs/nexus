@@ -58,6 +58,24 @@ const subscriptions = defineTable({
   .index("planId", ["planId"])
   .index("status", ["status"]);
 
+const rateLimits = defineTable({
+  key: v.string(),
+  count: v.number(),
+  windowStart: v.number(),
+}).index("key", ["key"]);
+
+const emailSettings = defineTable({
+  provider: v.string(),
+  resendApiKey: v.optional(v.string()),
+  from: v.optional(v.string()),
+  replyTo: v.optional(v.string()),
+  resetSubject: v.optional(v.string()),
+  resetHtml: v.optional(v.string()),
+  welcomeSubject: v.optional(v.string()),
+  welcomeHtml: v.optional(v.string()),
+  updatedAt: v.number(),
+});
+
 export default defineSchema({
   ...authTables,
   users,
@@ -65,6 +83,8 @@ export default defineSchema({
   auditLogs,
   subscriptionPlans,
   subscriptions,
+  rateLimits,
+  emailSettings,
   numbers: defineTable({
     value: v.number(),
   }),

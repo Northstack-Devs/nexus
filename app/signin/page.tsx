@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -43,6 +43,13 @@ type PasswordStrength = {
   barClass: string;
   checks: PasswordCheck[];
 };
+
+type UsernameStatus =
+  | "idle"
+  | "checking"
+  | "available"
+  | "taken"
+  | "rateLimited";
 
 const strengthScale = [
   { label: "Very weak", textClass: "text-rose-600", barClass: "bg-rose-500" },
@@ -125,26 +132,44 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
   );
   const shouldCheckUsername =
     flow === "signUp" && normalizedUsername.length >= 3;
-  const usernameAvailable = useQuery(
+  const checkUsernameAvailability = useMutation(
     api.myFunctions.checkUsernameAvailability,
-    shouldCheckUsername ? { username: normalizedUsername } : "skip",
   );
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
+
+  useEffect(() => {
+    if (!shouldCheckUsername) {
+      setUsernameStatus("idle");
+      return;
+    }
+
+    setUsernameStatus("checking");
+
+    const timeout = setTimeout(() => {
+      checkUsernameAvailability({ username: normalizedUsername })
+        .then((available) => {
+          setUsernameStatus(available ? "available" : "taken");
+        })
+        .catch((error: Error) => {
+          setUsernameStatus(
+            error?.message?.toLowerCase().includes("rate limit")
+              ? "rateLimited"
+              : "taken",
+          );
+        });
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [checkUsernameAvailability, normalizedUsername, shouldCheckUsername]);
 
   const passwordStrength = useMemo(
     () => buildPasswordStrength(password),
     [password],
   );
 
-  const usernameStatus = !shouldCheckUsername
-    ? "idle"
-    : usernameAvailable === undefined
-      ? "checking"
-      : usernameAvailable
-        ? "available"
-        : "taken";
-
   const canSubmit =
-    flow !== "signUp" || (shouldCheckUsername && usernameAvailable === true);
+    flow !== "signUp" ||
+    (shouldCheckUsername && usernameStatus === "available");
 
   const title =
     flow === "signIn"
@@ -282,6 +307,8 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
                   {usernameStatus === "checking" && "Checking availability..."}
                   {usernameStatus === "available" && "Username is available."}
                   {usernameStatus === "taken" && "Username is taken."}
+                  {usernameStatus === "rateLimited" &&
+                    "Too many checks. Try again soon."}
                 </div>
               </div>
             )}
