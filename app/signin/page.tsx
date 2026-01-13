@@ -214,7 +214,7 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
                     );
                     return;
                   }
-                  router.push("/");
+                  router.push("/admin");
                 })
                 .catch((signInError) => {
                   setError(signInError.message);

@@ -2,18 +2,16 @@
 
 ## Project Overview
 
-- Next.js app with Convex backend and Convex Auth.
+- Upty is a Next.js dashboard template backed by Convex and Convex Auth.
 - Admin dashboard overview lives under `app/(admin)/admin` with layout in `app/(admin)/layout.tsx`.
+- `/` redirects to `/admin` when authenticated, otherwise `/signin`.
 
 ## Recent Changes
 
-- Added admin dashboard shell with modern styling and user management UI.
-- Moved user management to `/admin/users` and added overview metrics at `/admin`.
-- Extended `users` table with optional `role` and `isDeactivated` fields in `convex/schema.ts`.
-- Added admin queries and mutations in `convex/admin.ts` for user CRUD, role management, audit logging, and subscriptions.
-- Seeded role presets via `seedRolePresets` internal mutation (admin/author/user with subscription permissions).
-- `/admin` is protected in `middleware.ts` (requires authentication).
-- Added feature overview documentation in `docs/overview.md`.
+- Modernized auth UI and added `/signup` route alongside `/signin`.
+- Added password reset flow (logs reset link from `convex/auth.ts`).
+- Added username availability checks via `convex/myFunctions.ts`.
+- Admin dashboard shell includes user management, roles, subscriptions, and audit logs.
 
 ## Auth & Roles
 

@@ -2,7 +2,13 @@
 
 ## Summary
 
-Upty is a Next.js application backed by Convex and Convex Auth. The admin experience lives in the `(admin)` route group and is intended to evolve into a full management console for the product.
+Upty is a Next.js + Convex dashboard template with Convex Auth. The admin experience lives in the `(admin)` route group and is intended as a starting point for internal tooling or SaaS dashboards.
+
+## Routing
+
+- `/` redirects to `/admin` when authenticated, otherwise `/signin`.
+- `/signin` and `/signup` provide password-based auth flows.
+- `/admin` is the primary dashboard entry point.
 
 ## Core Features
 
@@ -67,7 +73,6 @@ Upty is a Next.js application backed by Convex and Convex Auth. The admin experi
 
 ## Roadmap Ideas
 
-- Public dashboard route and analytics widgets.
 - Role-based access control (RBAC) definitions.
-- Audit logs and activity history.
 - Admin notifications and system status panels.
+- Organization or team support for multi-tenant dashboards.

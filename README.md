@@ -1,46 +1,33 @@
-# Welcome to your Convex + Next.js + Convex Auth app
+# Upty Dashboard Template
 
-This is a [Convex](https://convex.dev/) project created with [`npm create convex`](https://www.npmjs.com/package/create-convex).
+Upty is a Next.js admin dashboard template backed by Convex and Convex Auth. It ships with a modern admin shell, user management workflows, role presets, and authentication screens ready to customize.
 
-After the initial setup (<2 minutes) you'll have a working full-stack app using:
+## Routes
 
-- Convex as your backend (database, server logic)
-- [React](https://react.dev/) as your frontend (web page interactivity)
-- [Next.js](https://nextjs.org/) for optimized web hosting and page routing
-- [Tailwind](https://tailwindcss.com/) for building great looking accessible UI
-- [Convex Auth](https://labs.convex.dev/auth) for authentication
+- `/signin`: primary sign-in page.
+- `/signup`: sign-up page with password strength and username checks.
+- `/admin`: admin dashboard and management tools.
+- `/`: auto-redirects to `/admin` when authenticated, otherwise `/signin`.
 
-## Get started
+## Getting started
 
-If you just cloned this codebase and didn't use `npm create convex`, run:
-
-```
+```bash
 npm install
+npx convex dev --once
 npm run dev
 ```
 
-If you're reading this README on GitHub and want to use this template, run:
+## Admin access
 
-```
-npm create convex@latest -- -t nextjs-convexauth
-```
+Roles are stored on `users.role`. Update the user document (or use the admin mutations) to set `role = "admin"` for the initial admin account.
+
+## Convex Auth
+
+- Password reset is enabled but currently logs the reset link in `convex/auth.ts`. Replace the email provider with your real email service before going live.
+- Auth screens live in `app/signin/page.tsx` and `app/signup/page.tsx`.
 
 ## Learn more
 
-To learn more about developing your project with Convex, check out:
-
-- The [Tour of Convex](https://docs.convex.dev/get-started) for a thorough introduction to Convex principles.
-- The rest of [Convex docs](https://docs.convex.dev/) to learn about all Convex features.
-- [Stack](https://stack.convex.dev/) for in-depth articles on advanced topics.
-- [Convex Auth docs](https://labs.convex.dev/auth) for documentation on the Convex Auth library.
-
-## Configuring other authentication methods
-
-To configure different authentication methods, see [Configuration](https://labs.convex.dev/auth/config) in the Convex Auth docs.
-
-## Join the community
-
-Join thousands of developers building full-stack apps with Convex:
-
-- Join the [Convex Discord community](https://convex.dev/community) to get help in real-time.
-- Follow [Convex on GitHub](https://github.com/get-convex/), star and contribute to the open-source implementation of Convex.
+- Convex docs: https://docs.convex.dev/
+- Convex Auth docs: https://labs.convex.dev/auth
+- Overview notes: `docs/overview.md`
