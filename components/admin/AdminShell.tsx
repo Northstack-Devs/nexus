@@ -41,20 +41,7 @@ export default function AdminShell({
     .slice(0, 2)
     .toUpperCase();
 
-  const getAvatarUrl = () => {
-    if (currentUser?.image) {
-      if (
-        typeof currentUser.image === "string" &&
-        currentUser.image.startsWith("http")
-      ) {
-        return currentUser.image;
-      }
-      return `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${currentUser.image}`;
-    }
-    return null;
-  };
-
-  const avatarUrl = getAvatarUrl();
+  const avatarUrl = currentUser?.imageUrl ?? null;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">

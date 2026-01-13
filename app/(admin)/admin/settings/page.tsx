@@ -2,16 +2,8 @@
 
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useState } from "react";
-import {
-  User,
-  Mail,
-  Phone,
-  Image as ImageIcon,
-  Save,
-  Upload,
-  X,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { User, Mail, Phone, Save, Upload, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -25,15 +17,6 @@ interface ProfileFormState {
 
 export default function AdminSettingsPage() {
   const currentUser = useQuery(api.admin.getCurrentUser, {});
-
-  if (process.env.NODE_ENV === "development" && currentUser) {
-    console.log("Current user:", currentUser);
-    console.log(
-      "User image field:",
-      currentUser.image,
-      typeof currentUser.image,
-    );
-  }
   const updateMyProfile = useMutation(api.admin.updateMyProfile);
   const generateAvatarUploadUrl = useMutation(
     api.admin.generateAvatarUploadUrl,
@@ -41,11 +24,12 @@ export default function AdminSettingsPage() {
   const updateAvatar = useMutation(api.admin.updateAvatar);
 
   const [formState, setFormState] = useState<ProfileFormState>({
-    name: currentUser?.name ?? "",
-    email: currentUser?.email ?? "",
+    name: "",
+    email: "",
     phone: "",
   });
 
+  const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{
@@ -53,6 +37,18 @@ export default function AdminSettingsPage() {
     text: string;
   } | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!currentUser || isDirty) {
+      return;
+    }
+
+    setFormState({
+      name: currentUser.name ?? "",
+      email: currentUser.email ?? "",
+      phone: currentUser.phone ?? "",
+    });
+  }, [currentUser, isDirty]);
 
   if (currentUser === undefined) {
     return (
@@ -81,6 +77,7 @@ export default function AdminSettingsPage() {
         email: formState.email.trim() || undefined,
         phone: formState.phone.trim() || undefined,
       });
+      setIsDirty(false);
       setSaveMessage({ type: "success", text: "Profile updated successfully" });
     } catch (error) {
       setSaveMessage({ type: "error", text: "Failed to update profile" });
@@ -95,8 +92,6 @@ export default function AdminSettingsPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log("Starting avatar upload:", file.name, file.size, file.type);
-
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewUrl(reader.result as string);
@@ -107,9 +102,7 @@ export default function AdminSettingsPage() {
     setSaveMessage(null);
 
     try {
-      console.log("Generating upload URL...");
       const postUrl = await generateAvatarUploadUrl();
-      console.log("Upload URL generated:", postUrl.substring(0, 50) + "...");
 
       const response = await fetch(postUrl, {
         method: "POST",
@@ -117,24 +110,17 @@ export default function AdminSettingsPage() {
         body: file,
       });
 
-      console.log("Upload response status:", response.status);
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Upload error response:", errorText);
         throw new Error(`Upload failed: ${response.status}`);
       }
 
       const { storageId } = await response.json();
-      console.log("Storage ID received:", storageId, typeof storageId);
 
       await updateAvatar({ storageId });
-      console.log("Avatar mutation completed");
 
       setSaveMessage({ type: "success", text: "Avatar updated successfully" });
       setPreviewUrl(null);
     } catch (error) {
-      console.error("Avatar upload error:", error);
       setSaveMessage({ type: "error", text: "Failed to upload avatar" });
       setPreviewUrl(null);
     } finally {
@@ -157,8 +143,6 @@ export default function AdminSettingsPage() {
       return;
     }
 
-    console.log("Starting avatar drop:", file.name, file.size, file.type);
-
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewUrl(reader.result as string);
@@ -169,9 +153,7 @@ export default function AdminSettingsPage() {
     setSaveMessage(null);
 
     try {
-      console.log("Generating upload URL...");
       const postUrl = await generateAvatarUploadUrl();
-      console.log("Upload URL generated:", postUrl.substring(0, 50) + "...");
 
       const response = await fetch(postUrl, {
         method: "POST",
@@ -179,24 +161,17 @@ export default function AdminSettingsPage() {
         body: file,
       });
 
-      console.log("Upload response status:", response.status);
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Upload error response:", errorText);
         throw new Error(`Upload failed: ${response.status}`);
       }
 
       const { storageId } = await response.json();
-      console.log("Storage ID received:", storageId, typeof storageId);
 
       await updateAvatar({ storageId });
-      console.log("Avatar mutation completed");
 
       setSaveMessage({ type: "success", text: "Avatar updated successfully" });
       setPreviewUrl(null);
     } catch (error) {
-      console.error("Avatar drop error:", error);
       setSaveMessage({ type: "error", text: "Failed to upload avatar" });
       setPreviewUrl(null);
     } finally {
@@ -204,37 +179,11 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const getAvatarUrl = () => {
-    if (currentUser?.image) {
-      const image = currentUser.image;
-      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-      console.log("Convex URL from env:", convexUrl);
-      console.log("Image value:", image, typeof image);
-
-      if (typeof image === "string") {
-        if (image.startsWith("http")) {
-          console.log("Using external URL");
-          return image;
-        }
-        console.log("Using storage URL for ID:", image);
-        return `${convexUrl}/api/storage/${image}`;
-      } else {
-        console.log("Using storage URL for ID object:", String(image));
-        return `${convexUrl}/api/storage/${image}`;
-      }
-    }
-    return null;
-  };
-
-  const avatarUrl = getAvatarUrl();
+  const avatarUrl = currentUser?.imageUrl ?? null;
 
   const initials = (currentUser?.name ?? currentUser?.email ?? "U")
     .slice(0, 2)
     .toUpperCase();
-
-  if (process.env.NODE_ENV === "development" && avatarUrl) {
-    console.log("Full avatar URL:", avatarUrl);
-  }
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -348,12 +297,13 @@ export default function AdminSettingsPage() {
               <Input
                 id="name"
                 value={formState.name}
-                onChange={(event) =>
+                onChange={(event) => {
+                  setIsDirty(true);
                   setFormState((prev) => ({
                     ...prev,
                     name: event.target.value,
-                  }))
-                }
+                  }));
+                }}
                 placeholder="John Doe"
               />
             </div>
@@ -367,12 +317,13 @@ export default function AdminSettingsPage() {
                 id="email"
                 type="email"
                 value={formState.email}
-                onChange={(event) =>
+                onChange={(event) => {
+                  setIsDirty(true);
                   setFormState((prev) => ({
                     ...prev,
                     email: event.target.value,
-                  }))
-                }
+                  }));
+                }}
                 placeholder="john@example.com"
               />
             </div>
@@ -386,12 +337,13 @@ export default function AdminSettingsPage() {
                 id="phone"
                 type="tel"
                 value={formState.phone}
-                onChange={(event) =>
+                onChange={(event) => {
+                  setIsDirty(true);
                   setFormState((prev) => ({
                     ...prev,
                     phone: event.target.value,
-                  }))
-                }
+                  }));
+                }}
                 placeholder="+1 (555) 000-0000"
               />
             </div>

@@ -1,5 +1,6 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 
@@ -30,12 +31,23 @@ export const getCurrentUser = query({
       return null;
     }
 
+    let imageUrl: string | null = null;
+    if (user.image) {
+      if (typeof user.image === "string" && user.image.startsWith("http")) {
+        imageUrl = user.image;
+      } else {
+        imageUrl = await ctx.storage.getUrl(user.image as Id<"_storage">);
+      }
+    }
+
     return {
       _id: user._id,
       email: user.email ?? null,
       name: user.name ?? null,
+      phone: user.phone ?? null,
       role: user.role ?? "user",
       image: user.image ?? null,
+      imageUrl,
     };
   },
 });
