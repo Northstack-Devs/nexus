@@ -1,15 +1,16 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;
 
-async function enforceRateLimit(ctx: any, key: string) {
+async function enforceRateLimit(ctx: MutationCtx, key: string) {
   const now = Date.now();
   const existing = await ctx.db
     .query("rateLimits")
-    .withIndex("key", (query: any) => query.eq("key", key))
+    .withIndex("key", (query) => query.eq("key", key))
     .first();
 
   if (!existing) {

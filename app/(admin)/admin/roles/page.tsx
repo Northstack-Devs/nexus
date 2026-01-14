@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 interface RoleRow {
   _id: Id<"roles">;
@@ -156,27 +156,24 @@ export default function RolesPage() {
   }, [roles, users]);
 
   const roleCount = useMemo(() => roleSummaries.length, [roleSummaries]);
-
-  useEffect(() => {
+  const effectiveSelectedRoleName = useMemo(() => {
     if (roleSummaries.length === 0) {
-      setSelectedRoleName("");
-      return;
+      return "";
     }
-    if (!selectedRoleName) {
-      setSelectedRoleName(roleSummaries[0].name);
-      return;
+    if (
+      selectedRoleName &&
+      roleSummaries.some((role) => role.name === selectedRoleName)
+    ) {
+      return selectedRoleName;
     }
-    const hasRole = roleSummaries.some(
-      (role) => role.name === selectedRoleName,
-    );
-    if (!hasRole) {
-      setSelectedRoleName(roleSummaries[0].name);
-    }
+    return roleSummaries[0].name;
   }, [roleSummaries, selectedRoleName]);
 
   const selectedRole = useMemo(
-    () => roleSummaries.find((role) => role.name === selectedRoleName) ?? null,
-    [roleSummaries, selectedRoleName],
+    () =>
+      roleSummaries.find((role) => role.name === effectiveSelectedRoleName) ??
+      null,
+    [roleSummaries, effectiveSelectedRoleName],
   );
 
   if (currentUser === undefined) {
@@ -363,7 +360,7 @@ export default function RolesPage() {
               <div className="space-y-2">
                 <Label>Role</Label>
                 <Select
-                  value={selectedRoleName}
+                  value={effectiveSelectedRoleName}
                   onValueChange={setSelectedRoleName}
                 >
                   <SelectTrigger>

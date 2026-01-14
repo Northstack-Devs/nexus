@@ -207,7 +207,7 @@ export default function AdminSettingsPage() {
       });
       setIsDirty(false);
       setSaveMessage({ type: "success", text: "Profile updated successfully" });
-    } catch (error) {
+    } catch {
       setSaveMessage({ type: "error", text: "Failed to update profile" });
     } finally {
       setIsSaving(false);
@@ -233,7 +233,7 @@ export default function AdminSettingsPage() {
       setResendApiKey("");
       setIsEmailDirty(false);
       setEmailMessage({ type: "success", text: "Email settings updated" });
-    } catch (error) {
+    } catch {
       setEmailMessage({
         type: "error",
         text: "Failed to update email settings",
@@ -255,7 +255,7 @@ export default function AdminSettingsPage() {
       });
       setIsOAuthDirty(false);
       setOauthMessage({ type: "success", text: "OAuth settings updated" });
-    } catch (error) {
+    } catch {
       setOauthMessage({ type: "error", text: "Failed to update OAuth" });
     } finally {
       setIsOAuthSaving(false);
@@ -296,7 +296,7 @@ export default function AdminSettingsPage() {
 
       setSaveMessage({ type: "success", text: "Avatar updated successfully" });
       setPreviewUrl(null);
-    } catch (error) {
+    } catch {
       setSaveMessage({ type: "error", text: "Failed to upload avatar" });
       setPreviewUrl(null);
     } finally {
@@ -347,7 +347,7 @@ export default function AdminSettingsPage() {
 
       setSaveMessage({ type: "success", text: "Avatar updated successfully" });
       setPreviewUrl(null);
-    } catch (error) {
+    } catch {
       setSaveMessage({ type: "error", text: "Failed to upload avatar" });
       setPreviewUrl(null);
     } finally {
@@ -877,14 +877,8 @@ export default function AdminSettingsPage() {
                   <div className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
                     <p className="text-sm font-medium">Configured status</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Provider buttons show only when env vars are set.
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
-                    <p className="text-sm font-medium">Configured status</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Provider buttons show only when env vars are set.
+                      Provider buttons show only when enabled and env vars are
+                      set.
                     </p>
                   </div>
                 </div>

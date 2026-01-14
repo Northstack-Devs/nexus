@@ -4,8 +4,14 @@ import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
 import { Resend } from "resend";
 import { v } from "convex/values";
+import type {
+  FunctionReference,
+  FunctionReturnType,
+  OptionalRestArgs,
+} from "convex/server";
 import { internal } from "./_generated/api";
 import { internalAction, internalQuery } from "./_generated/server";
+import type { DatabaseReader } from "./_generated/server";
 
 const DEFAULT_RESET_SUBJECT = "Reset your Nexus password";
 const DEFAULT_RESET_HTML = `
@@ -24,9 +30,16 @@ const renderTemplate = (template: string, variables: Record<string, string>) =>
     return variables[key] ?? "";
   });
 
+type RunQuery = <
+  Query extends FunctionReference<"query", "public" | "internal">,
+>(
+  query: Query,
+  ...args: OptionalRestArgs<Query>
+) => Promise<FunctionReturnType<Query>>;
+
 type EmailSettingsContext = {
-  db?: any;
-  runQuery?: (query: any, args: Record<string, unknown>) => Promise<any>;
+  db?: DatabaseReader;
+  runQuery?: RunQuery;
 };
 
 const fetchEmailSettings = async (ctx?: EmailSettingsContext) => {
@@ -151,7 +164,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Password({
       reset: passwordResetProvider,
-      profile: (params, _ctx) => {
+      profile: (params) => {
         const email = String(params.email ?? "")
           .trim()
           .toLowerCase();

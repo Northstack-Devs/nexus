@@ -4,12 +4,13 @@ import {
   internalMutation,
   internalQuery,
 } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 
-async function requireAdmin(ctx: { db: any; auth: any }) {
+async function requireAdmin(ctx: QueryCtx | MutationCtx) {
   const userId = await getAuthUserId(ctx);
   if (userId === null) {
     throw new Error("Not authenticated");
@@ -86,7 +87,7 @@ export const listRoles = query({
 });
 
 async function logAudit(
-  ctx: { db: any; auth: any },
+  ctx: MutationCtx,
   action: string,
   targetId?: string,
   metadata?: Record<string, unknown>,
@@ -411,7 +412,13 @@ export const updateUser = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
-    const updates: any = {
+    const updates: Partial<{
+      name: string;
+      email: string;
+      phone: string;
+      image: string;
+      role: string;
+    }> = {
       name: args.name,
       email: args.email,
       phone: args.phone,
