@@ -1,6 +1,9 @@
 import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
+import { Resend } from "resend";
+import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import { internalAction, internalQuery } from "./_generated/server";
 
 const DEFAULT_RESET_SUBJECT = "Reset your Nexus password";
 const DEFAULT_RESET_HTML = `
@@ -34,6 +37,13 @@ const fetchEmailSettings = async (ctx?: EmailSettingsContext) => {
   return null;
 };
 
+export const getEmailSettingsInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("emailSettings").first();
+  },
+});
+
 const sendEmail = async ({
   ctx,
   to,
@@ -51,7 +61,6 @@ const sendEmail = async ({
     return;
   }
 
-  const { Resend } = await import("resend");
   const resend = new Resend(resendApiKey);
   const from =
     settings?.from ?? process.env.AUTH_EMAIL_FROM ?? "no-reply@upty.dev";
@@ -98,6 +107,44 @@ const passwordResetProvider = {
   },
 };
 
+export const sendWelcomeEmail = internalAction({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.runQuery(internal.auth.getWelcomeEmailUser, {
+      userId: args.userId,
+    });
+    if (!user?.email) {
+      return;
+    }
+
+    const settings = await fetchEmailSettings({ runQuery: ctx.runQuery });
+    const subject = settings?.welcomeSubject ?? DEFAULT_WELCOME_SUBJECT;
+    const nameSuffix = user.name ? ` ${user.name}` : "";
+    const html = renderTemplate(settings?.welcomeHtml ?? DEFAULT_WELCOME_HTML, {
+      name: nameSuffix,
+      email: user.email,
+    });
+
+    await sendEmail({
+      ctx: { runQuery: ctx.runQuery },
+      to: user.email,
+      subject,
+      html,
+    });
+  },
+});
+
+export const getWelcomeEmailUser = internalQuery({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Password({
@@ -130,22 +177,8 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         return;
       }
 
-      const settings = await fetchEmailSettings({ db: ctx.db });
-      const subject = settings?.welcomeSubject ?? DEFAULT_WELCOME_SUBJECT;
-      const nameSuffix = user.name ? ` ${user.name}` : "";
-      const html = renderTemplate(
-        settings?.welcomeHtml ?? DEFAULT_WELCOME_HTML,
-        {
-          name: nameSuffix,
-          email: user.email,
-        },
-      );
-
-      await sendEmail({
-        ctx: { db: ctx.db },
-        to: user.email,
-        subject,
-        html,
+      await ctx.scheduler.runAfter(0, internal.auth.sendWelcomeEmail, {
+        userId: args.userId,
       });
     },
   },
