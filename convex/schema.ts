@@ -76,6 +76,12 @@ const emailSettings = defineTable({
   updatedAt: v.number(),
 });
 
+const oauthSettings = defineTable({
+  provider: v.string(),
+  enabled: v.boolean(),
+  updatedAt: v.number(),
+}).index("provider", ["provider"]);
+
 export default defineSchema({
   ...authTables,
   users,
@@ -85,6 +91,7 @@ export default defineSchema({
   subscriptions,
   rateLimits,
   emailSettings,
+  oauthSettings,
   numbers: defineTable({
     value: v.number(),
   }),

@@ -528,6 +528,21 @@ const normalizeOptional = (value?: string) => {
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
+const OAUTH_PROVIDERS = [
+  { id: "github", name: "GitHub" },
+  { id: "google", name: "Google" },
+] as const;
+
+type OAuthProviderId = (typeof OAUTH_PROVIDERS)[number]["id"];
+
+const assertOAuthProvider = (provider: string): OAuthProviderId => {
+  const match = OAUTH_PROVIDERS.find((entry) => entry.id === provider);
+  if (!match) {
+    throw new Error("Unsupported OAuth provider");
+  }
+  return match.id;
+};
+
 export const getEmailSettings = query({
   args: {},
   handler: async (ctx) => {
@@ -615,6 +630,66 @@ export const getEmailSettingsInternal = internalQuery({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query("emailSettings").first();
+  },
+});
+
+export const getOAuthSettings = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    const records = await ctx.db.query("oauthSettings").collect();
+    const recordMap = new Map(
+      records.map((record) => [record.provider, record]),
+    );
+
+    return OAUTH_PROVIDERS.map((provider) => {
+      const record = recordMap.get(provider.id);
+      return {
+        id: provider.id,
+        name: provider.name,
+        enabled: record?.enabled ?? false,
+        updatedAt: record?.updatedAt ?? null,
+      };
+    });
+  },
+});
+
+export const updateOAuthSettings = mutation({
+  args: {
+    provider: v.string(),
+    enabled: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    const providerId = assertOAuthProvider(args.provider);
+    const existing = await ctx.db
+      .query("oauthSettings")
+      .withIndex("provider", (q) => q.eq("provider", providerId))
+      .first();
+
+    const nextEnabled = args.enabled ?? existing?.enabled ?? false;
+
+    const payload = {
+      provider: providerId,
+      enabled: nextEnabled,
+      updatedAt: Date.now(),
+    };
+
+    if (existing) {
+      await ctx.db.patch(existing._id, payload);
+      await logAudit(ctx, "oauth.updated", providerId, {
+        provider: providerId,
+        enabled: nextEnabled,
+      });
+      return existing._id;
+    }
+
+    const recordId = await ctx.db.insert("oauthSettings", payload);
+    await logAudit(ctx, "oauth.created", providerId, {
+      provider: providerId,
+      enabled: nextEnabled,
+    });
+    return recordId;
   },
 });
 

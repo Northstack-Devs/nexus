@@ -1,13 +1,15 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   BadgeCheck,
+  Chrome,
+  Github,
   KeyRound,
   Loader2,
   Lock,
@@ -30,6 +32,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type AuthFlow = "signIn" | "signUp" | "reset";
+
+type OAuthProviderId = "github" | "google";
 
 type PasswordCheck = {
   label: string;
@@ -93,6 +97,8 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [oauthLoadingProvider, setOauthLoadingProvider] =
+    useState<OAuthProviderId | null>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -126,6 +132,19 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
     setFlow(nextFlow);
   };
 
+  const handleOAuthSignIn = (provider: OAuthProviderId) => {
+    setOauthLoadingProvider(provider);
+    setError(null);
+    setNotice(null);
+    void signIn(provider)
+      .catch((signInError) => {
+        setError(signInError.message);
+      })
+      .finally(() => {
+        setOauthLoadingProvider(null);
+      });
+  };
+
   const normalizedUsername = useMemo(
     () => username.trim().toLowerCase(),
     [username],
@@ -135,6 +154,7 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
   const checkUsernameAvailability = useMutation(
     api.myFunctions.checkUsernameAvailability,
   );
+  const oauthProviders = useQuery(api.oauth.listOAuthProviders);
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
 
   useEffect(() => {
@@ -170,6 +190,9 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
   const canSubmit =
     flow !== "signUp" ||
     (shouldCheckUsername && usernameStatus === "available");
+  const availableOAuthProviders =
+    oauthProviders?.filter((provider) => provider.configured) ?? [];
+  const isSubmitting = loading || oauthLoadingProvider !== null;
 
   const title =
     flow === "signIn"
@@ -410,7 +433,7 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
             <Button
               className="w-full"
               type="submit"
-              disabled={loading || !canSubmit}
+              disabled={isSubmitting || !canSubmit}
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {loading
@@ -422,6 +445,40 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
                     : "Send reset link"}
               {flow === "reset" && !loading && <KeyRound className="h-4 w-4" />}
             </Button>
+
+            {flow !== "reset" && availableOAuthProviders.length > 0 && (
+              <>
+                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+                  <span>or continue with</span>
+                  <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+                </div>
+                {availableOAuthProviders.map((provider) => {
+                  const isLoading = oauthLoadingProvider === provider.id;
+                  return (
+                    <Button
+                      key={provider.id}
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled={isSubmitting}
+                      onClick={() =>
+                        handleOAuthSignIn(provider.id as OAuthProviderId)
+                      }
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : provider.id === "google" ? (
+                        <Chrome className="h-4 w-4" />
+                      ) : (
+                        <Github className="h-4 w-4" />
+                      )}
+                      Continue with {provider.name}
+                    </Button>
+                  );
+                })}
+              </>
+            )}
 
             {flow === "reset" && (
               <div className="flex flex-row gap-2 text-sm justify-center">

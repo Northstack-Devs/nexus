@@ -9,6 +9,7 @@ import {
   Mail,
   Phone,
   Save,
+  ShieldCheck,
   Upload,
   User,
   X,
@@ -26,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface ProfileFormState {
   name: string;
@@ -42,6 +44,12 @@ interface EmailSettingsFormState {
   welcomeHtml: string;
 }
 
+type OAuthProviderId = "github" | "google";
+
+interface OAuthFormState {
+  enabled: boolean;
+}
+
 export default function AdminSettingsPage() {
   const currentUser = useQuery(api.admin.getCurrentUser, {});
   const updateMyProfile = useMutation(api.admin.updateMyProfile);
@@ -54,6 +62,11 @@ export default function AdminSettingsPage() {
     currentUser?.role === "admin" ? {} : "skip",
   );
   const updateEmailSettings = useMutation(api.admin.updateEmailSettings);
+  const oauthSettings = useQuery(
+    api.admin.getOAuthSettings,
+    currentUser?.role === "admin" ? {} : "skip",
+  );
+  const updateOAuthSettings = useMutation(api.admin.updateOAuthSettings);
 
   const [formState, setFormState] = useState<ProfileFormState>({
     name: "",
@@ -74,17 +87,28 @@ export default function AdminSettingsPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<"reset" | "welcome">(
     "reset",
   );
+  const [selectedProvider, setSelectedProvider] =
+    useState<OAuthProviderId>("github");
+  const [oauthFormState, setOauthFormState] = useState<OAuthFormState>({
+    enabled: false,
+  });
 
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isEmailDirty, setIsEmailDirty] = useState(false);
   const [isEmailSaving, setIsEmailSaving] = useState(false);
+  const [isOAuthDirty, setIsOAuthDirty] = useState(false);
+  const [isOAuthSaving, setIsOAuthSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
   const [emailMessage, setEmailMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [oauthMessage, setOauthMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
@@ -120,6 +144,21 @@ export default function AdminSettingsPage() {
         "<p>Welcome to Nexus{{name}},</p>\n<p>Your account is ready. You can sign in anytime to manage your workspace.</p>",
     });
   }, [emailSettings, isEmailDirty]);
+
+  useEffect(() => {
+    if (!oauthSettings || isOAuthDirty) {
+      return;
+    }
+    const selected = oauthSettings.find(
+      (provider) => provider.id === selectedProvider,
+    );
+    if (!selected) {
+      return;
+    }
+    setOauthFormState({
+      enabled: selected.enabled,
+    });
+  }, [oauthSettings, isOAuthDirty, selectedProvider]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -201,6 +240,25 @@ export default function AdminSettingsPage() {
       });
     } finally {
       setIsEmailSaving(false);
+    }
+  };
+
+  const handleOAuthSave = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsOAuthSaving(true);
+    setOauthMessage(null);
+
+    try {
+      await updateOAuthSettings({
+        provider: selectedProvider,
+        enabled: oauthFormState.enabled,
+      });
+      setIsOAuthDirty(false);
+      setOauthMessage({ type: "success", text: "OAuth settings updated" });
+    } catch (error) {
+      setOauthMessage({ type: "error", text: "Failed to update OAuth" });
+    } finally {
+      setIsOAuthSaving(false);
     }
   };
 
@@ -299,6 +357,16 @@ export default function AdminSettingsPage() {
 
   const avatarUrl = currentUser?.imageUrl ?? null;
   const resendApiKeySet = emailSettings?.resendApiKeySet ?? false;
+  const oauthSettingsLoaded = oauthSettings !== undefined;
+  const convexSiteUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+    ? process.env.NEXT_PUBLIC_CONVEX_URL.replace(
+        ".convex.cloud",
+        ".convex.site",
+      )
+    : null;
+  const oauthCallbackUrl = convexSiteUrl
+    ? `${convexSiteUrl}/api/auth/callback/${selectedProvider}`
+    : `https://<deployment>.convex.site/api/auth/callback/${selectedProvider}`;
 
   const initials = (currentUser?.name ?? currentUser?.email ?? "U")
     .slice(0, 2)
@@ -314,9 +382,10 @@ export default function AdminSettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="email">Email</TabsTrigger>
+          <TabsTrigger value="oauth">OAuth</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -731,6 +800,120 @@ export default function AdminSettingsPage() {
                     <Save className="h-4 w-4" />
                   )}
                   {isEmailSaving ? "Saving..." : "Save email settings"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="oauth">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div className="px-6 py-6 border-b border-slate-200 dark:border-slate-800 space-y-2">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5" />
+                OAuth providers
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Manage GitHub and Google sign-in credentials.
+              </p>
+            </div>
+            <form onSubmit={handleOAuthSave} className="p-6 space-y-6">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="oauth-provider">Provider</Label>
+                    <Select
+                      value={selectedProvider}
+                      onValueChange={(value) => {
+                        setSelectedProvider(value as OAuthProviderId);
+                        setIsOAuthDirty(false);
+                        setOauthMessage(null);
+                      }}
+                    >
+                      <SelectTrigger id="oauth-provider">
+                        <SelectValue placeholder="Select provider" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="github">GitHub</SelectItem>
+                        <SelectItem value="google">Google</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium">Enable provider</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Show this provider on the sign-in page.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={oauthFormState.enabled}
+                      onCheckedChange={(checked) => {
+                        setIsOAuthDirty(true);
+                        setOauthFormState((prev) => ({
+                          ...prev,
+                          enabled: checked,
+                        }));
+                      }}
+                      disabled={!oauthSettingsLoaded}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3 space-y-2">
+                    <p className="text-sm font-medium">Environment variables</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Set `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` and
+                      `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` via `npx convex
+                      env set`.
+                    </p>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      Callback URL:{" "}
+                      <span className="font-mono">{oauthCallbackUrl}</span>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
+                    <p className="text-sm font-medium">Configured status</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Provider buttons show only when env vars are set.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
+                    <p className="text-sm font-medium">Configured status</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Provider buttons show only when env vars are set.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {oauthMessage && (
+                <div
+                  className={`text-sm p-3 rounded-lg ${
+                    oauthMessage.type === "success"
+                      ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200"
+                      : "bg-rose-50 text-rose-800 dark:bg-rose-500/10 dark:text-rose-200"
+                  }`}
+                >
+                  {oauthMessage.text}
+                </div>
+              )}
+
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  disabled={isOAuthSaving || !oauthSettingsLoaded}
+                  className="w-full sm:w-auto"
+                >
+                  {isOAuthSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  {isOAuthSaving ? "Saving..." : "Save OAuth settings"}
                 </Button>
               </div>
             </form>
