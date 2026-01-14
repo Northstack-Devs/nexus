@@ -6,9 +6,10 @@ Nexus is a Next.js + Convex admin dashboard starter with Convex Auth. The admin 
 
 ## Routing
 
-- `/` redirects to `/admin` when authenticated, otherwise `/signin`.
+- `/` redirects admins to `/admin`, otherwise shows a pending-access landing page.
 - `/signin` and `/signup` provide password-based auth flows.
 - `/admin` is the primary dashboard entry point.
+- `/credits` highlights the stack and source code.
 
 ## Core Features
 
@@ -17,6 +18,8 @@ Nexus is a Next.js + Convex admin dashboard starter with Convex Auth. The admin 
 - User management with role-based gating and CRUD workflows.
 - Account deactivation using a soft-delete flag (`users.isDeactivated`).
 - Subscription plans and user subscriptions for feature access.
+- Supported email provider: Resend.
+- Resend-powered password reset + welcome emails with editable templates.
 
 ## Admin Dashboard
 
@@ -44,11 +47,17 @@ Nexus is a Next.js + Convex admin dashboard starter with Convex Auth. The admin 
 - `subscriptions`
   - `userId`, `planId`, `status`
   - `currentPeriodEnd`, `canceledAt`, `metadata`
+- `emailSettings`
+  - `provider`, `resendApiKey`, `from`, `replyTo`
+  - `resetSubject`, `resetHtml`, `welcomeSubject`, `welcomeHtml`
+- `rateLimits`
+  - `key`, `count`, `windowStart`
 
 ## Convex Admin Functions
 
 - Queries
   - `getCurrentUser`
+  - `getEmailSettings`
   - `listUsers` (admin-only results)
   - `listRoles` (admin-only results)
   - `listSubscriptionPlans` (admin-only results)
@@ -66,6 +75,7 @@ Nexus is a Next.js + Convex admin dashboard starter with Convex Auth. The admin 
   - `deleteSubscriptionPlan`
   - `createSubscription`
   - `updateSubscription`
+  - `updateEmailSettings`
   - `seedRolePresets` (internal, admin/author/user presets)
   - `setUserRole` (internal)
 - Audit

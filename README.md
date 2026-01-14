@@ -7,7 +7,8 @@ Nexus is a Next.js admin dashboard starter backed by Convex, Convex Auth, and a 
 - `/signin`: primary sign-in page.
 - `/signup`: sign-up page with password strength and username checks.
 - `/admin`: admin dashboard and management tools.
-- `/`: auto-redirects to `/admin` when authenticated, otherwise `/signin`.
+- `/credits`: acknowledgements and GitHub link.
+- `/`: redirects admins to `/admin`, otherwise shows a pending-access landing page.
 
 ## Getting started
 
@@ -23,7 +24,9 @@ Roles are stored on `users.role`. Update the user document (or use the admin mut
 
 ## Convex Auth
 
-- Password reset is enabled but currently logs the reset link in `convex/auth.ts`. Replace the email provider with your real email service before going live.
+- Supported email provider: Resend.
+- Password reset and welcome emails are sent via Resend when configured.
+- Update email templates and API keys in the Admin Settings > Email tab.
 - Auth screens live in `app/signin/page.tsx` and `app/signup/page.tsx`.
 
 ## Learn more
