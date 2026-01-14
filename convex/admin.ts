@@ -465,39 +465,88 @@ export const reactivateUser = mutation({
   },
 });
 
+const ROLE_PRESETS = [
+  {
+    name: "admin",
+    description: "Full access to manage users, roles, and settings.",
+    permissions: [
+      "users.read",
+      "users.write",
+      "roles.manage",
+      "audit.read",
+      "subscriptions.read",
+      "subscriptions.manage",
+      "billing.manage",
+      "settings.manage",
+    ],
+  },
+  {
+    name: "author",
+    description: "Create and maintain content with limited access.",
+    permissions: ["users.read", "subscriptions.read"],
+  },
+  {
+    name: "user",
+    description: "Default access with minimal administrative permissions.",
+    permissions: ["subscriptions.read"],
+  },
+];
+
+export const ensureRolePresets = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    for (const preset of ROLE_PRESETS) {
+      const existing = await ctx.db
+        .query("roles")
+        .withIndex("name", (q) => q.eq("name", preset.name))
+        .first();
+      if (!existing) {
+        const roleId = await ctx.db.insert("roles", preset);
+        await logAudit(ctx, "role.created", roleId, {
+          name: preset.name,
+        });
+      }
+    }
+  },
+});
+
+export const bootstrapFirstAdmin = internalMutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const existingAdmin = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("role"), "admin"))
+      .first();
+    if (existingAdmin) {
+      return { updated: false };
+    }
+
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (user.role !== "admin") {
+      await ctx.db.patch(args.userId, {
+        role: "admin",
+      });
+      await logAudit(ctx, "user.updated", args.userId, {
+        role: "admin",
+      });
+    }
+
+    return { updated: true };
+  },
+});
+
 export const seedRolePresets = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const presets = [
-      {
-        name: "admin",
-        description: "Full access to manage users, roles, and settings.",
-        permissions: [
-          "users.read",
-          "users.write",
-          "roles.manage",
-          "audit.read",
-          "subscriptions.read",
-          "subscriptions.manage",
-          "billing.manage",
-          "settings.manage",
-        ],
-      },
-      {
-        name: "author",
-        description: "Create and maintain content with limited access.",
-        permissions: ["users.read", "subscriptions.read"],
-      },
-      {
-        name: "user",
-        description: "Default access with minimal administrative permissions.",
-        permissions: ["subscriptions.read"],
-      },
-    ];
+    const allowedNames = new Set(ROLE_PRESETS.map((preset) => preset.name));
 
-    const allowedNames = new Set(presets.map((preset) => preset.name));
-
-    for (const preset of presets) {
+    for (const preset of ROLE_PRESETS) {
       const existing = await ctx.db
         .query("roles")
         .withIndex("name", (q) => q.eq("name", preset.name))

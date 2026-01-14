@@ -11,7 +11,7 @@ import type {
 } from "convex/server";
 import { internal } from "./_generated/api";
 import { internalAction, internalQuery } from "./_generated/server";
-import type { DatabaseReader } from "./_generated/server";
+import type { DatabaseReader, DatabaseWriter } from "./_generated/server";
 
 const DEFAULT_RESET_SUBJECT = "Reset your Nexus password";
 const DEFAULT_RESET_HTML = `
@@ -29,6 +29,45 @@ const renderTemplate = (template: string, variables: Record<string, string>) =>
   template.replace(/{{\s*(\w+)\s*}}/g, (_, key: string) => {
     return variables[key] ?? "";
   });
+
+const ROLE_PRESETS = [
+  {
+    name: "admin",
+    description: "Full access to manage users, roles, and settings.",
+    permissions: [
+      "users.read",
+      "users.write",
+      "roles.manage",
+      "audit.read",
+      "subscriptions.read",
+      "subscriptions.manage",
+      "billing.manage",
+      "settings.manage",
+    ],
+  },
+  {
+    name: "author",
+    description: "Create and maintain content with limited access.",
+    permissions: ["users.read", "subscriptions.read"],
+  },
+  {
+    name: "user",
+    description: "Default access with minimal administrative permissions.",
+    permissions: ["subscriptions.read"],
+  },
+];
+
+const ensureRolePresets = async (db: DatabaseWriter) => {
+  for (const preset of ROLE_PRESETS) {
+    const existing = await db
+      .query("roles")
+      .withIndex("name", (q) => q.eq("name", preset.name))
+      .first();
+    if (!existing) {
+      await db.insert("roles", preset);
+    }
+  }
+};
 
 type RunQuery = <
   Query extends FunctionReference<"query", "public" | "internal">,
@@ -191,12 +230,29 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   ],
   callbacks: {
     afterUserCreatedOrUpdated: async (ctx, args) => {
-      if (args.existingUserId !== null || args.type !== "credentials") {
+      if (args.existingUserId !== null) {
         return;
       }
 
+      await ensureRolePresets(ctx.db);
+
       const user = await ctx.db.get("users", args.userId);
-      if (!user?.email) {
+      if (!user) {
+        return;
+      }
+
+      if (!user.role) {
+        const existingAdmin = await ctx.db
+          .query("users")
+          .filter((q) => q.eq(q.field("role"), "admin"))
+          .first();
+        const defaultRole = existingAdmin ? "user" : "admin";
+        await ctx.db.patch(args.userId, {
+          role: defaultRole,
+        });
+      }
+
+      if (args.type !== "credentials" || !user.email) {
         return;
       }
 
