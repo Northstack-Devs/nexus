@@ -20,12 +20,28 @@ Nexus is a Next.js admin dashboard starter backed by Convex, Convex Auth, and a 
 ```bash
 npm install
 npx convex dev --once
+npm run seed:roles
 npm run dev
+```
+
+## JWT keys
+
+Generate the signing keys and add them to your Convex environment:
+
+```bash
+node generateKeys.mjs
+```
+
+The script prints `JWT_PRIVATE_KEY` and `JWKS`. Copy each value into Convex:
+
+```bash
+npx convex env set JWT_PRIVATE_KEY "<value-from-output>"
+npx convex env set JWKS '<value-from-output>'
 ```
 
 ## Admin access
 
-Roles are stored on `users.role`. Update the user document (or use the admin mutations) to set `role = "admin"` for the initial admin account.
+Roles are stored on `users.role`. The first user created becomes an admin automatically; update the user document (or use the admin mutations) to change roles later.
 
 ## Convex Auth
 
