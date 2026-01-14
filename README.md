@@ -1,5 +1,10 @@
 # Nexus Admin Dashboard Starter
 
+![Version](https://img.shields.io/badge/version-0.0.1-blue)
+![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white)
+![Convex](https://img.shields.io/badge/Convex-4B32C3?logo=convex&logoColor=white)
+![Resend](https://img.shields.io/badge/Resend-000000?logo=resend&logoColor=white)
+
 Nexus is a Next.js admin dashboard starter backed by Convex, Convex Auth, and a set of frontend UI libraries. It ships with a modern admin shell, user management workflows, role presets, and authentication screens ready to customize.
 
 ## Routes
