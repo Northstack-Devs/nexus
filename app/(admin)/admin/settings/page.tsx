@@ -364,8 +364,17 @@ export default function AdminSettingsPage() {
         ".convex.site",
       )
     : null;
-  const oauthCallbackUrl = convexSiteUrl
-    ? `${convexSiteUrl}/api/auth/callback/${selectedProvider}`
+  const oauthCallbackBase =
+    typeof window !== "undefined"
+      ? (() => {
+          const { hostname, origin } = window.location;
+          const isLocalhost = ["localhost", "127.0.0.1"].includes(hostname);
+          const isConvexSite = hostname.endsWith(".convex.site");
+          return isLocalhost || !isConvexSite ? origin : convexSiteUrl;
+        })()
+      : convexSiteUrl;
+  const oauthCallbackUrl = oauthCallbackBase
+    ? `${oauthCallbackBase}/api/auth/callback/${selectedProvider}`
     : `https://<deployment>.convex.site/api/auth/callback/${selectedProvider}`;
 
   const initials = (currentUser?.name ?? currentUser?.email ?? "U")

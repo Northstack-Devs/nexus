@@ -136,7 +136,16 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
     setOauthLoadingProvider(provider);
     setError(null);
     setNotice(null);
-    void signIn(provider)
+    const redirectTo =
+      typeof window !== "undefined"
+        ? (() => {
+            const { hostname, origin } = window.location;
+            const isLocalhost = ["localhost", "127.0.0.1"].includes(hostname);
+            const isConvexSite = hostname.endsWith(".convex.site");
+            return isLocalhost || !isConvexSite ? origin : undefined;
+          })()
+        : undefined;
+    void signIn(provider, redirectTo ? { redirectTo } : undefined)
       .catch((signInError) => {
         setError(signInError.message);
       })
