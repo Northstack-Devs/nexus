@@ -56,7 +56,9 @@ if (shouldPrompt) {
   const answer = await rl.question("Use a self-hosted Convex instance? (y/N) ");
   useSelfHosted = answer.trim().toLowerCase().startsWith("y");
   if (useSelfHosted) {
-    const url = await rl.question("Self-hosted Convex URL: ");
+    const url = await rl.question(
+      "Self-hosted Convex URL (include http:// or https://): ",
+    );
     const adminKey = await rl.question("Self-hosted admin key: ");
     if (url) {
       setEnvValue("CONVEX_SELF_HOSTED_URL", url.trim());
