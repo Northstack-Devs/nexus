@@ -24,6 +24,11 @@ npm run seed:roles
 npm run dev
 ```
 
+During `npm install` you'll be prompted to choose whether you want to use a
+self-hosted Convex instance. If you answer yes, the setup script will update
+`.env.local` with your self-hosted URL and admin key and skip the Convex Auth
+setup.
+
 ## JWT keys
 
 Generate the signing keys and add them to your Convex environment:

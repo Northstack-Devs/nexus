@@ -9,6 +9,7 @@
     "dev": "npm-run-all --parallel dev:frontend dev:backend",
     "dev:frontend": "next dev",
     "dev:backend": "convex dev",
+    "postinstall": "node setup.mjs --once",
     "predev": "convex dev --until-success && convex dev --once --run-sh \"node setup.mjs --once\" && convex dashboard",
     "seed:roles": "convex run admin:ensureRolePresets",
     "build": "next build",
