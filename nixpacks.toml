@@ -1,4 +1,0 @@
-[phases.build]
-cmds = [
-  "npx convex deploy --cmd 'npm run build'",
-]
