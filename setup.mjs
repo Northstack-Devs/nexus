@@ -94,63 +94,57 @@ const validateUrl = (input) => {
 // ── Interactive prompt ───────────────────────────────
 
 const shouldPrompt = process.stdin.isTTY && process.stdout.isTTY;
-let useSelfHosted = false;
-let httpActionsUrl = "";
+let useSelfHosted = !!config.CONVEX_SELF_HOSTED_URL;
+let httpActionsUrl = config.CONVEX_SELF_HOSTED_HTTP_URL || "";
 
-if (shouldPrompt) {
-  // Skip prompt when self-hosted values are already configured.
-  if (config.CONVEX_SELF_HOSTED_URL) {
-    useSelfHosted = true;
-    httpActionsUrl = config.CONVEX_SELF_HOSTED_HTTP_URL || "";
-  } else {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-    const answer = await rl.question(
-      "Use a self-hosted Convex instance? (y/N) ",
+if (shouldPrompt && !useSelfHosted) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  const answer = await rl.question(
+    "Use a self-hosted Convex instance? (y/N) ",
+  );
+  useSelfHosted = answer.trim().toLowerCase().startsWith("y");
+  if (useSelfHosted) {
+    console.log(
+      "\nSelf-hosted Convex requires three URLs:\n" +
+        "  1. Deployment URL    - backend endpoint (e.g. https://my-app.cloud.example.dev)\n" +
+        "  2. HTTP Actions URL  - serves auth endpoints / HTTP routes\n" +
+        "  3. Dashboard URL     - web UI for managing your deployment\n",
     );
-    useSelfHosted = answer.trim().toLowerCase().startsWith("y");
-    if (useSelfHosted) {
-      console.log(
-        "\nSelf-hosted Convex requires three URLs:\n" +
-          "  1. Deployment URL    - backend endpoint (e.g. https://my-app.cloud.example.dev)\n" +
-          "  2. HTTP Actions URL  - serves auth endpoints / HTTP routes\n" +
-          "  3. Dashboard URL     - web UI for managing your deployment\n",
-      );
 
-      const deployUrl = validateUrl(
-        await rl.question("Deployment URL (http:// or https://): "),
-      );
-      httpActionsUrl = validateUrl(
-        await rl.question("HTTP Actions URL (http:// or https://): "),
-      );
-      const dashboardUrl = validateUrl(
-        await rl.question("Dashboard URL (http:// or https://): "),
-      );
-      const adminKey = await rl.question("Admin key: ");
+    const deployUrl = validateUrl(
+      await rl.question("Deployment URL (http:// or https://): "),
+    );
+    httpActionsUrl = validateUrl(
+      await rl.question("HTTP Actions URL (http:// or https://): "),
+    );
+    const dashboardUrl = validateUrl(
+      await rl.question("Dashboard URL (http:// or https://): "),
+    );
+    const adminKey = await rl.question("Admin key: ");
 
-      const env = {};
-      if (deployUrl) {
-        env.CONVEX_SELF_HOSTED_URL = deployUrl;
-        env.NEXT_PUBLIC_CONVEX_URL = deployUrl;
-      }
-      if (httpActionsUrl) {
-        env.CONVEX_SELF_HOSTED_HTTP_URL = httpActionsUrl;
-        env.NEXT_PUBLIC_CONVEX_HTTP_URL = httpActionsUrl;
-      }
-      if (dashboardUrl) {
-        env.CONVEX_DASHBOARD_URL = dashboardUrl;
-      }
-      if (adminKey.trim()) {
-        env.CONVEX_SELF_HOSTED_ADMIN_KEY = adminKey.trim();
-      }
-      if (Object.keys(env).length > 0) {
-        setEnvValues(env);
-      }
+    const env = {};
+    if (deployUrl) {
+      env.CONVEX_SELF_HOSTED_URL = deployUrl;
+      env.NEXT_PUBLIC_CONVEX_URL = deployUrl;
     }
-    rl.close();
+    if (httpActionsUrl) {
+      env.CONVEX_SELF_HOSTED_HTTP_URL = httpActionsUrl;
+      env.NEXT_PUBLIC_CONVEX_HTTP_URL = httpActionsUrl;
+    }
+    if (dashboardUrl) {
+      env.CONVEX_DASHBOARD_URL = dashboardUrl;
+    }
+    if (adminKey.trim()) {
+      env.CONVEX_SELF_HOSTED_ADMIN_KEY = adminKey.trim();
+    }
+    if (Object.keys(env).length > 0) {
+      setEnvValues(env);
+    }
   }
+  rl.close();
 }
 
 // ── Convex Auth bootstrap (cloud only) ───────────────
