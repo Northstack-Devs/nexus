@@ -24,25 +24,50 @@ npm run seed:roles
 npm run dev
 ```
 
-During `npm install` you'll be prompted to choose whether you want to use a
-self-hosted Convex instance. If you answer yes, the setup script will update
-`.env.local` with your self-hosted URL and admin key and skip the Convex Auth
-setup.
+During `npm install` the setup script runs automatically. It will:
 
-## JWT keys
+1. Ask whether you want to use a **self-hosted** Convex instance.
+2. For self-hosted, prompt for the **Deployment URL**, **HTTP Actions URL**, **Dashboard URL**, and **Admin Key**.
+3. Generate `JWT_PRIVATE_KEY` and `JWKS` keys automatically.
+4. Push `SITE_URL`, `JWT_PRIVATE_KEY`, and `JWKS` to your Convex deployment via `npx convex env set`.
 
-Generate the signing keys and add them to your Convex environment:
+If the env vars are already configured, the script will let you know and ask before overwriting.
+
+### Re-running setup
+
+You can re-run the full interactive setup at any time:
+
+```bash
+npm run setup
+```
+
+### Manual key generation
+
+If you prefer to generate keys manually:
 
 ```bash
 node generateKeys.mjs
 ```
 
-The script prints `JWT_PRIVATE_KEY` and `JWKS`. Copy each value into Convex:
+Then set them on your Convex deployment:
 
 ```bash
+npx convex env set SITE_URL "<your-http-actions-url>"
 npx convex env set JWT_PRIVATE_KEY "<value-from-output>"
 npx convex env set JWKS '<value-from-output>'
 ```
+
+## Self-hosted Convex
+
+When using a self-hosted Convex instance (e.g. NorthStack), the setup script stores three separate URLs in `.env.local`:
+
+| Variable | Purpose |
+|---|---|
+| `CONVEX_SELF_HOSTED_URL` | Deployment endpoint (backend) |
+| `CONVEX_SELF_HOSTED_HTTP_URL` | HTTP actions endpoint (auth routes) |
+| `CONVEX_DASHBOARD_URL` | Dashboard web UI |
+
+The HTTP actions URL is also exposed as `NEXT_PUBLIC_CONVEX_HTTP_URL` so the frontend can build correct OAuth callback URLs without relying on the cloud `.convex.site` convention.
 
 ## Admin access
 

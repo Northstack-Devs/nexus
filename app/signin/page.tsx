@@ -141,8 +141,11 @@ export function AuthPage({ initialFlow = "signIn" }: AuthPageProps) {
         ? (() => {
             const { hostname, origin } = window.location;
             const isLocalhost = ["localhost", "127.0.0.1"].includes(hostname);
+            const isSelfHosted = !!process.env.NEXT_PUBLIC_CONVEX_HTTP_URL;
             const isConvexSite = hostname.endsWith(".convex.site");
-            return isLocalhost || !isConvexSite ? origin : undefined;
+            return isLocalhost || isSelfHosted || !isConvexSite
+              ? origin
+              : undefined;
           })()
         : undefined;
     void signIn(provider, redirectTo ? { redirectTo } : undefined)

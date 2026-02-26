@@ -358,21 +358,26 @@ export default function AdminSettingsPage() {
   const avatarUrl = currentUser?.imageUrl ?? null;
   const resendApiKeySet = emailSettings?.resendApiKeySet ?? false;
   const oauthSettingsLoaded = oauthSettings !== undefined;
-  const convexSiteUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-    ? process.env.NEXT_PUBLIC_CONVEX_URL.replace(
-        ".convex.cloud",
-        ".convex.site",
-      )
-    : null;
+  const convexHttpUrl =
+    process.env.NEXT_PUBLIC_CONVEX_HTTP_URL ??
+    (process.env.NEXT_PUBLIC_CONVEX_URL
+      ? process.env.NEXT_PUBLIC_CONVEX_URL.replace(
+          ".convex.cloud",
+          ".convex.site",
+        )
+      : null);
   const oauthCallbackBase =
     typeof window !== "undefined"
       ? (() => {
           const { hostname, origin } = window.location;
           const isLocalhost = ["localhost", "127.0.0.1"].includes(hostname);
+          const isSelfHosted = !!process.env.NEXT_PUBLIC_CONVEX_HTTP_URL;
           const isConvexSite = hostname.endsWith(".convex.site");
-          return isLocalhost || !isConvexSite ? origin : convexSiteUrl;
+          return isLocalhost || isSelfHosted || !isConvexSite
+            ? origin
+            : convexHttpUrl;
         })()
-      : convexSiteUrl;
+      : convexHttpUrl;
   const oauthCallbackUrl = oauthCallbackBase
     ? `${oauthCallbackBase}/api/auth/callback/${selectedProvider}`
     : `https://<deployment>.convex.site/api/auth/callback/${selectedProvider}`;
