@@ -94,8 +94,9 @@ const validateUrl = (input) => {
 // ── Interactive prompt ───────────────────────────────
 
 const shouldPrompt = process.stdin.isTTY && process.stdout.isTTY;
-let useSelfHosted = !!config.CONVEX_SELF_HOSTED_URL;
-let httpActionsUrl = config.CONVEX_SELF_HOSTED_HTTP_URL || "";
+// Check both .env.local (dotenv) and process.env (Docker ENV / system env).
+let useSelfHosted = !!(config.CONVEX_SELF_HOSTED_URL || process.env.CONVEX_SELF_HOSTED_URL);
+let httpActionsUrl = config.CONVEX_SELF_HOSTED_HTTP_URL || process.env.CONVEX_SELF_HOSTED_HTTP_URL || "";
 
 if (shouldPrompt && !useSelfHosted) {
   const rl = readline.createInterface({
